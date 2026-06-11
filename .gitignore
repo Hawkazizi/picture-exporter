@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Temporary files
+temp/
+*.log
+
+# Environment variables
+.env
+.DS_Store
+
+# Exclude heavy binary font files (You can upload these to your VPS manually later)
+public/fonts/*.ttf
+public/fonts/*.otf
+public/fonts/*.woff
+public/fonts/*.woff2
+public/fonts/*.eot

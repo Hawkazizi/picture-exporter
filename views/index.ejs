@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Controls -->
+        <aside class="controls-panel">
+            <h1>ویرایشگر تصویر</h1>
+
+            <div class="control-group">
+                <label for="imageUpload">۱. بارگذاری تصویر</label>
+                <input type="file" id="imageUpload" accept="image/*" autocomplete="off">
+            </div>
+
+            <div class="control-group">
+                <label for="textInput">۲. متن پیش‌نمایش (برای تنظیم موقعیت)</label>
+                <input type="text" id="textInput" placeholder="متن را برای تنظیم موقعیت وارد کنید..." autocomplete="off">
+            </div>
+
+            <div class="control-group">
+                <label for="fontFamily">نوع قلم</label>
+                <select id="fontFamily" autocomplete="off">
+                    <optgroup label="🇮🇷 قلم‌های فارسی">
+                        <option value="BNazanin">B Nazanin (بی نازنین)</option>
+                        <option value="BSahra">B Sahra (بی صحرا)</option>
+                        <option value="BYekan" selected>B Yekan (بی یکان)</option>
+                        <option value="IranNastaliq">Iran Nastaliq (ایران نستعلیق)</option>
+                        <option value="Mandana MRT">Mandana (ماندانا)</option>
+                        <option value="Shablon MRT">Shablon (شابلون)</option>
+                    </optgroup>
+
+                    <optgroup label="🇬🇧 قلم‌های انگلیسی و تزئینی">
+                        <option value="Callite">Callite</option>
+                        <option value="CANAVAR">CANAVAR</option>
+                        <option value="Decoration">Decoration</option>
+                        <option value="Deep Hero">Deep Hero</option>
+                        <option value="Diane Amorta">Diane Amorta</option>
+                        <option value="Gemini">Gemini</option>
+                        <option value="Handwash">Handwash</option>
+                        <option value="Honey Crepes">Honey Crepes</option>
+                        <option value="Party Script">Party Script</option>
+                        <option value="Rockers Garage">Rockers Garage</option>
+                        <option value="Runtoe">Runtoe</option>
+                        <option value="SHUTTLE-X">SHUTTLE-X</option>
+                        <option value="Sunny Spells Basic">Sunny Spells Basic</option>
+                        <option value="The Kanzie TTF">The Kanzie TTF</option>
+                        <option value="Think Smart">Think Smart</option>
+                        <option value="Young Man">Young Man</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="fontSize">اندازه قلم: <span id="fontSizeValue">40</span>px</label>
+                <input type="range" id="fontSize" min="10" max="1000" value="40" autocomplete="off">
+            </div>
+
+            <div class="control-group">
+                <label for="textColor">رنگ متن</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="textColor" value="#ffffff" autocomplete="off">
+                    <span id="colorHex">#ffffff</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="imageStyle">🎨 استایل و فیلتر تصویر</label>
+                <select id="imageStyle" autocomplete="off">
+                    <option value="none">ساده (بدون افکت)</option>
+                    <option value="grayscale(100%)">سیاه و سفید (B&W)</option>
+                    <option value="invert(100%)">نگاتیو (Negative)</option>
+                    <option value="contrast(160%)">کنتراست بالا (High Contrast)</option>
+                    <option value="sepia(100%)">سپیا (قدیمی)</option>
+                    <option value="sepia(40%) contrast(110%) brightness(90%)">وینتیج (Vintage)</option>
+                    <option value="brightness(130%) contrast(105%)">روشن (Bright)</option>
+                    <option value="brightness(80%) contrast(130%) saturate(80%)">تیره و سینمایی (Moody)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="batchTexts">۳. متن‌های دسته‌ای (هر کدام در یک خط)</label>
+                <textarea id="batchTexts" rows="5" placeholder="متن ۱&#10;متن ۲&#10;متن ۳..." autocomplete="off"></textarea>
+            </div>
+
+            <div class="control-group">
+                <button id="generateBtn" class="primary-btn">✨ تولید پیش‌نمایش‌ها</button>
+            </div>
+
+            <div class="control-group">
+                <button id="downloadBtn" class="primary-btn">⬇ دانلود تصویر تکی</button>
+            </div>
+
+        </aside>
+
+        <!-- Canvas Preview Area -->
+        <main class="preview-panel">
+            <!-- Edit Mode (Canvas + Video Controls) -->
+            <div id="editMode" class="edit-mode-container">
+                <div class="canvas-wrapper">
+                    <canvas id="editorCanvas"></canvas>
+                    <div id="placeholderText">برای شروع ویرایش، یک تصویر بارگذاری کنید</div>
+                </div>
+
+                <!-- Video controls placed directly under the image -->
+                <div id="editVideoControls" class="edit-video-controls hidden">
+                    <h3>🎥 ساخت ویدیو برای این تصویر</h3>
+
+                    <div class="control-group">
+                        <label for="videoEffect">نوع افکت ویدیو:</label>
+                        <select id="videoEffect" autocomplete="off">
+                            <option value="none">بدون افکت (ساده)</option>
+                            <option value="particles">✨ ذرات معلق (Floats/Bokeh)</option>
+                            <option value="kenburns">🔍 بزرگنمایی آرام (Ken Burns)</option>
+                            <option value="zoomout">🔙 کوچک‌نمایی آرام (Zoom Out)</option>
+                            <option value="pan">↔️ حرکت آرام افقی (Pan)</option>
+                            <option value="wavy">🌊 افکت موج‌دار متحرک (Wavy)</option>
+                            <option value="shake">📳 لرزش خفیف سینمایی (Shake)</option>
+                            <option value="pulse">💓 ضربان آرام (Pulse)</option>
+                            <option value="rotate">🔄 چرخش آرام (Rotate)</option>
+                            <option value="glitch">📺 گلیچ / نویز دیجیتال (Glitch)</option>
+                            <option value="vhs">📼 افکت نوار ویدیویی (VHS)</option>
+                            <option value="hue">🌈 تغییر رنگ متحرک (Hue Shift)</option>
+                            <option value="blur">🌫️ تاری متحرک (Blur)</option>
+                            <option value="fade">🌑 محو شدن (Fade)</option>
+                            <option value="zoompulse">🔎 زوم ضربانی (Zoom Pulse)</option>
+                            <option value="slideleft">⬅️ اسلاید از چپ (Slide Left)</option>
+                            <option value="slideup">⬆️ اسلاید از پایین (Slide Up)</option>
+                            <option value="flash">⚡ فلش نوری (Flash)</option>
+                            <option value="invert_pulse">🌓 ضد رنگ متحرک (Invert Pulse)</option>
+                            <option value="flip">🔁 چرخش افقی (Flip)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="audioUploadEdit">🎵 موسیقی پس‌زمینه (MP3):</label>
+                        <input type="file" id="audioUploadEdit" accept="audio/*" autocomplete="off">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="videoDuration">⏱️ مدت زمان ویدیو (ثانیه):</label>
+                        <input type="number" id="videoDuration" min="1" max="120" value="5" step="1" autocomplete="off">
+                    </div>
+
+                    <button id="generateVideoBtnEdit" class="primary-btn video-btn-style">🎥 ساخت و دانلود ویدیو</button>
+                </div>
+            </div>
+
+            <!-- Batch Preview Mode -->
+            <div id="batchMode" class="batch-grid-wrapper hidden">
+                <div class="batch-header">
+                    <h2>تصاویر تولید شده</h2>
+                    <div class="batch-actions">
+                        <button id="downloadAllBtn" class="primary-btn small-btn">⬇ دانلود همه (ZIP)</button>
+                        <button id="backToEditorBtn" class="secondary-btn small-btn">بازگشت به ویرایشگر →</button>
+                    </div>
+                </div>
+                <div id="batchGrid" class="batch-grid"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/editor.js"></script>
+</body>
+</html>
