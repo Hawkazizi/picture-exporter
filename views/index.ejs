@@ -64,6 +64,17 @@
                 <input type="range" id="fontSize" min="10" max="1000" value="40" autocomplete="off">
             </div>
 
+            <!-- NEW: Text Box Width & Height Controls -->
+            <div class="control-group">
+                <label for="textBoxWidth">عرض کادر متن: <span id="textBoxWidthValue">80</span>%</label>
+                <input type="range" id="textBoxWidth" min="10" max="100" value="80" autocomplete="off">
+            </div>
+
+            <div class="control-group">
+                <label for="textBoxHeight">ارتفاع کادر متن: <span id="textBoxHeightValue">40</span>%</label>
+                <input type="range" id="textBoxHeight" min="10" max="100" value="40" autocomplete="off">
+            </div>
+
             <div class="control-group">
                 <label for="textColor">رنگ متن</label>
                 <div class="color-picker-wrapper">
@@ -86,8 +97,8 @@
                 </select>
             </div>
 
-            <div class="control-group">
-                <label for="batchTexts">۳. متن‌های دسته‌ای (هر کدام در یک خط)</label>
+                  <div class="control-group">
+                <label for="batchTexts">۳. متن‌های دسته‌ای (هر کدام در یک خط) <span id="batchCount" style="color: #2563eb; font-weight: bold;">(۰)</span></label>
                 <textarea id="batchTexts" rows="5" placeholder="متن ۱&#10;متن ۲&#10;متن ۳..." autocomplete="off"></textarea>
             </div>
 

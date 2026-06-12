@@ -15,6 +15,10 @@ class ImageEditor {
     this.imageStyle = "none";
     this.generatedImages = [];
 
+    // NEW: Text box dimensions
+    this.textBoxWidthPercent = 80;
+    this.textBoxHeightPercent = 40;
+
     this.currentlyEditingIndex = null;
     this.isDragging = false;
     this.dragStartX = 0;
@@ -46,6 +50,8 @@ class ImageEditor {
     this.currentlyEditingIndex = null;
     this.isDragging = false;
     this.videoDuration = 5000;
+    this.textBoxWidthPercent = 80;
+    this.textBoxHeightPercent = 40;
 
     if (this.textInput) this.textInput.value = "";
     if (this.fontFamilySelect) this.fontFamilySelect.value = "BYekan";
@@ -59,9 +65,19 @@ class ImageEditor {
     }
     if (this.imageStyleSelect) this.imageStyleSelect.value = "none";
     if (this.batchTexts) this.batchTexts.value = "";
+    if (this.batchCount) this.batchCount.textContent = "(۰)";
     if (this.imageUpload) this.imageUpload.value = "";
     if (this.audioUpload) this.audioUpload.value = "";
     if (this.videoDurationInput) this.videoDurationInput.value = 5;
+
+    if (this.textBoxWidthInput) {
+      this.textBoxWidthInput.value = 80;
+      if (this.textBoxWidthValue) this.textBoxWidthValue.textContent = 80;
+    }
+    if (this.textBoxHeightInput) {
+      this.textBoxHeightInput.value = 40;
+      if (this.textBoxHeightValue) this.textBoxHeightValue.textContent = 40;
+    }
 
     if (this.previewAnimationId) {
       cancelAnimationFrame(this.previewAnimationId);
@@ -99,7 +115,14 @@ class ImageEditor {
     this.editVideoControls = document.getElementById("editVideoControls");
     this.videoEffectSelect = document.getElementById("videoEffect");
 
+    // NEW: Text box elements
+    this.textBoxWidthInput = document.getElementById("textBoxWidth");
+    this.textBoxWidthValue = document.getElementById("textBoxWidthValue");
+    this.textBoxHeightInput = document.getElementById("textBoxHeight");
+    this.textBoxHeightValue = document.getElementById("textBoxHeightValue");
+
     this.batchTexts = document.getElementById("batchTexts");
+    this.batchCount = document.getElementById("batchCount");
     this.generateBtn = document.getElementById("generateBtn");
     this.editMode = document.getElementById("editMode");
     this.batchMode = document.getElementById("batchMode");
@@ -151,6 +174,21 @@ class ImageEditor {
       if (this.currentlyEditingIndex !== null) this.updateBatchImageState();
     });
 
+    // NEW: Bind text box events
+    this.textBoxWidthInput.addEventListener("input", (e) => {
+      this.textBoxWidthPercent = parseInt(e.target.value, 10);
+      this.textBoxWidthValue.textContent = this.textBoxWidthPercent;
+      this.draw();
+      if (this.currentlyEditingIndex !== null) this.updateBatchImageState();
+    });
+
+    this.textBoxHeightInput.addEventListener("input", (e) => {
+      this.textBoxHeightPercent = parseInt(e.target.value, 10);
+      this.textBoxHeightValue.textContent = this.textBoxHeightPercent;
+      this.draw();
+      if (this.currentlyEditingIndex !== null) this.updateBatchImageState();
+    });
+
     // NEW: Live preview when effect changes
     this.videoEffectSelect.addEventListener("change", (e) => {
       this.startEffectPreview(e.target.value);
@@ -169,7 +207,7 @@ class ImageEditor {
       passive: false,
     });
     this.canvas.addEventListener("touchend", () => this.handleMouseUp());
-
+    this.batchTexts.addEventListener("input", () => this.updateBatchCount());
     this.downloadBtn.addEventListener("click", () => this.downloadImage());
     this.generateBtn.addEventListener("click", () => this.generateBatch());
     this.backToEditorBtn.addEventListener("click", () => this.showBatchMode());
@@ -464,6 +502,8 @@ class ImageEditor {
       img.fontFamily = this.fontFamily;
       img.textColor = this.textColor;
       img.imageStyle = this.imageStyle;
+      img.textBoxWidthPercent = this.textBoxWidthPercent;
+      img.textBoxHeightPercent = this.textBoxHeightPercent;
     }
   }
 
@@ -508,17 +548,60 @@ class ImageEditor {
     this.drawText();
   }
 
+  // UPDATED: Multi-line text wrapping logic
   drawText() {
-    if (!this.text) return;
+    if (!this.text || !this.isImageLoaded) return;
+
+    const maxWidth = (this.canvas.width * this.textBoxWidthPercent) / 100;
+    const maxHeight = (this.canvas.height * this.textBoxHeightPercent) / 100;
+    const lineHeight = this.fontSize * 1.4;
+
+    // Split text into words (supports RTL languages like Persian)
+    const words = this.text.split(" ");
+    const lines = [];
+    let currentLine = "";
+
+    // Measure and wrap text
     this.ctx.font = `${this.fontSize}px "${this.fontFamily}"`;
-    this.ctx.fillStyle = this.textColor;
     this.ctx.textAlign = "center";
-    this.ctx.textBaseline = "middle";
+    this.ctx.textBaseline = "top";
+
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const metrics = this.ctx.measureText(testLine);
+      if (metrics.width > maxWidth && currentLine !== "") {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+
+    // Calculate total text height
+    const totalTextHeight = lines.length * lineHeight;
+    let startY = this.textY - totalTextHeight / 2;
+
+    // Constrain Y to stay within textBoxHeight
+    const topBound = this.textY - maxHeight / 2;
+    const bottomBound = this.textY + maxHeight / 2 - totalTextHeight;
+    startY = Math.max(topBound, Math.min(startY, bottomBound));
+
+    // Draw shadow & text
+    this.ctx.fillStyle = this.textColor;
     this.ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
     this.ctx.shadowBlur = 4;
     this.ctx.shadowOffsetX = 2;
     this.ctx.shadowOffsetY = 2;
-    this.ctx.fillText(this.text, this.textX, this.textY);
+
+    lines.forEach((line, i) => {
+      const y = startY + i * lineHeight;
+      // Ensure each line stays within vertical bounds
+      if (y >= topBound && y + this.fontSize <= bottomBound + totalTextHeight) {
+        this.ctx.fillText(line, this.textX, y);
+      }
+    });
+
     this.ctx.shadowColor = "transparent";
   }
 
@@ -532,18 +615,17 @@ class ImageEditor {
     };
   }
 
+  // UPDATED: Check collision against the whole text box instead of single line
   isMouseOverText(mouseX, mouseY) {
     if (!this.text) return false;
-    this.ctx.font = `${this.fontSize}px "${this.fontFamily}"`;
-    const metrics = this.ctx.measureText(this.text);
-    const textWidth = metrics.width;
-    const textHeight = this.fontSize;
+    const maxWidth = (this.canvas.width * this.textBoxWidthPercent) / 100;
+    const maxHeight = (this.canvas.height * this.textBoxHeightPercent) / 100;
     const padding = 10;
     return (
-      mouseX >= this.textX - textWidth / 2 - padding &&
-      mouseX <= this.textX + textWidth / 2 + padding &&
-      mouseY >= this.textY - textHeight / 2 - padding &&
-      mouseY <= this.textY + textHeight / 2 + padding
+      mouseX >= this.textX - maxWidth / 2 - padding &&
+      mouseX <= this.textX + maxWidth / 2 + padding &&
+      mouseY >= this.textY - maxHeight / 2 - padding &&
+      mouseY <= this.textY + maxHeight / 2 + padding
     );
   }
 
@@ -717,7 +799,13 @@ class ImageEditor {
       this.generateVideoBtn.disabled = false;
     }
   }
-
+  updateBatchCount() {
+    if (!this.batchTexts || !this.batchCount) return;
+    const lines = this.batchTexts.value
+      .split("\n")
+      .filter((line) => line.trim() !== "");
+    this.batchCount.textContent = `(${lines.length})`;
+  }
   generateBatch() {
     if (!this.isImageLoaded)
       return alert("لطفاً ابتدا یک تصویر بارگذاری کنید!");
@@ -738,6 +826,8 @@ class ImageEditor {
       originalFontFamily = this.fontFamily,
       originalColor = this.textColor;
     const originalImageStyle = this.imageStyle;
+    const originalBoxW = this.textBoxWidthPercent;
+    const originalBoxH = this.textBoxHeightPercent;
 
     texts.forEach((currentText, index) => {
       this.text = currentText;
@@ -751,6 +841,8 @@ class ImageEditor {
         fontFamily: this.fontFamily,
         textColor: this.textColor,
         imageStyle: this.imageStyle,
+        textBoxWidthPercent: this.textBoxWidthPercent,
+        textBoxHeightPercent: this.textBoxHeightPercent,
         dataUrl,
       });
 
@@ -793,6 +885,8 @@ class ImageEditor {
     this.fontFamily = originalFontFamily;
     this.textColor = originalColor;
     this.imageStyle = originalImageStyle;
+    this.textBoxWidthPercent = originalBoxW;
+    this.textBoxHeightPercent = originalBoxH;
     this.draw();
     this.editMode.classList.add("hidden");
     this.batchMode.classList.remove("hidden");
@@ -810,6 +904,13 @@ class ImageEditor {
 
     this.imageStyle = imgData.imageStyle || "none";
     this.imageStyleSelect.value = this.imageStyle;
+
+    this.textBoxWidthPercent = imgData.textBoxWidthPercent || 80;
+    this.textBoxHeightPercent = imgData.textBoxHeightPercent || 40;
+    this.textBoxWidthInput.value = this.textBoxWidthPercent;
+    this.textBoxWidthValue.textContent = this.textBoxWidthPercent;
+    this.textBoxHeightInput.value = this.textBoxHeightPercent;
+    this.textBoxHeightValue.textContent = this.textBoxHeightPercent;
 
     this.textInput.value = this.text;
     this.fontFamilySelect.value = this.fontFamily;
@@ -854,6 +955,8 @@ class ImageEditor {
       this.fontFamily = imgData.fontFamily;
       this.textColor = imgData.textColor;
       this.imageStyle = imgData.imageStyle || "none";
+      this.textBoxWidthPercent = imgData.textBoxWidthPercent || 80;
+      this.textBoxHeightPercent = imgData.textBoxHeightPercent || 40;
 
       this.draw();
       imgData.dataUrl = this.canvas.toDataURL("image/png");
