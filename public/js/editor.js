@@ -15,7 +15,6 @@ class ImageEditor {
     this.imageStyle = "none";
     this.generatedImages = [];
 
-    // NEW: Text box dimensions
     this.textBoxWidthPercent = 80;
     this.textBoxHeightPercent = 40;
 
@@ -24,11 +23,10 @@ class ImageEditor {
     this.dragStartX = 0;
     this.dragStartY = 0;
     this.videoDuration = 5000;
-    this.previewAnimationId = null; // For live effect preview
+    this.previewAnimationId = null;
 
     this.initElements();
     this.bindEvents();
-
     this.resetToDefaults();
 
     document.fonts.ready.then(() => {
@@ -115,7 +113,6 @@ class ImageEditor {
     this.editVideoControls = document.getElementById("editVideoControls");
     this.videoEffectSelect = document.getElementById("videoEffect");
 
-    // NEW: Text box elements
     this.textBoxWidthInput = document.getElementById("textBoxWidth");
     this.textBoxWidthValue = document.getElementById("textBoxWidthValue");
     this.textBoxHeightInput = document.getElementById("textBoxHeight");
@@ -174,7 +171,6 @@ class ImageEditor {
       if (this.currentlyEditingIndex !== null) this.updateBatchImageState();
     });
 
-    // NEW: Bind text box events
     this.textBoxWidthInput.addEventListener("input", (e) => {
       this.textBoxWidthPercent = parseInt(e.target.value, 10);
       this.textBoxWidthValue.textContent = this.textBoxWidthPercent;
@@ -189,7 +185,6 @@ class ImageEditor {
       if (this.currentlyEditingIndex !== null) this.updateBatchImageState();
     });
 
-    // NEW: Live preview when effect changes
     this.videoEffectSelect.addEventListener("change", (e) => {
       this.startEffectPreview(e.target.value);
     });
@@ -207,6 +202,7 @@ class ImageEditor {
       passive: false,
     });
     this.canvas.addEventListener("touchend", () => this.handleMouseUp());
+
     this.batchTexts.addEventListener("input", () => this.updateBatchCount());
     this.downloadBtn.addEventListener("click", () => this.downloadImage());
     this.generateBtn.addEventListener("click", () => this.generateBatch());
@@ -215,7 +211,6 @@ class ImageEditor {
     this.generateVideoBtn.addEventListener("click", () => this.generateVideo());
   }
 
-  // NEW: Starts a continuous 5-second looping preview of the selected effect
   startEffectPreview(effect) {
     if (this.previewAnimationId) cancelAnimationFrame(this.previewAnimationId);
     if (!this.isImageLoaded || effect === "none") {
@@ -232,22 +227,19 @@ class ImageEditor {
     }));
 
     let startTime = null;
-    const previewDuration = 5000; // 5 seconds loop
+    const previewDuration = 5000;
 
     const animate = (timestamp) => {
       if (!startTime) startTime = timestamp;
       let progress = (timestamp - startTime) / previewDuration;
-
       if (progress >= 1) {
-        startTime = timestamp; // Loop the preview
+        startTime = timestamp;
         progress = 0;
       }
 
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.filter = this.imageStyle === "none" ? "none" : this.imageStyle;
-
       this.applyEffect(effect, progress, timestamp, particles);
-
       this.ctx.filter = "none";
       this.drawText();
 
@@ -256,7 +248,6 @@ class ImageEditor {
     this.previewAnimationId = requestAnimationFrame(animate);
   }
 
-  // NEW: Extracted effect logic so both Preview and Video Generator can use it
   applyEffect(effect, progress, timestamp, particles) {
     if (effect === "kenburns") {
       const scale = 1 + progress * 0.2;
@@ -524,11 +515,9 @@ class ImageEditor {
         this.fontSizeValue.textContent = this.fontSize;
         this.textX = this.canvas.width / 2;
         this.textY = this.canvas.height / 2;
-
         try {
           await document.fonts.load(`${this.fontSize}px "${this.fontFamily}"`);
         } catch (e) {}
-
         this.draw();
         this.editVideoControls.classList.remove("hidden");
       };
@@ -540,15 +529,12 @@ class ImageEditor {
   draw() {
     if (!this.isImageLoaded) return;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
     this.ctx.filter = this.imageStyle === "none" ? "none" : this.imageStyle;
     this.ctx.drawImage(this.image, 0, 0, this.canvas.width, this.canvas.height);
     this.ctx.filter = "none";
-
     this.drawText();
   }
 
-  // UPDATED: Multi-line text wrapping logic
   drawText() {
     if (!this.text || !this.isImageLoaded) return;
 
@@ -556,12 +542,10 @@ class ImageEditor {
     const maxHeight = (this.canvas.height * this.textBoxHeightPercent) / 100;
     const lineHeight = this.fontSize * 1.4;
 
-    // Split text into words (supports RTL languages like Persian)
     const words = this.text.split(" ");
     const lines = [];
     let currentLine = "";
 
-    // Measure and wrap text
     this.ctx.font = `${this.fontSize}px "${this.fontFamily}"`;
     this.ctx.textAlign = "center";
     this.ctx.textBaseline = "top";
@@ -578,16 +562,13 @@ class ImageEditor {
     }
     if (currentLine) lines.push(currentLine);
 
-    // Calculate total text height
     const totalTextHeight = lines.length * lineHeight;
     let startY = this.textY - totalTextHeight / 2;
 
-    // Constrain Y to stay within textBoxHeight
     const topBound = this.textY - maxHeight / 2;
     const bottomBound = this.textY + maxHeight / 2 - totalTextHeight;
     startY = Math.max(topBound, Math.min(startY, bottomBound));
 
-    // Draw shadow & text
     this.ctx.fillStyle = this.textColor;
     this.ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
     this.ctx.shadowBlur = 4;
@@ -596,7 +577,6 @@ class ImageEditor {
 
     lines.forEach((line, i) => {
       const y = startY + i * lineHeight;
-      // Ensure each line stays within vertical bounds
       if (y >= topBound && y + this.fontSize <= bottomBound + totalTextHeight) {
         this.ctx.fillText(line, this.textX, y);
       }
@@ -615,7 +595,6 @@ class ImageEditor {
     };
   }
 
-  // UPDATED: Check collision against the whole text box instead of single line
   isMouseOverText(mouseX, mouseY) {
     if (!this.text) return false;
     const maxWidth = (this.canvas.width * this.textBoxWidthPercent) / 100;
@@ -691,13 +670,15 @@ class ImageEditor {
     link.click();
   }
 
+  // ==========================================
+  // 🔥 100% CLIENT-SIDE VIDEO GENERATION
+  // ==========================================
   async generateVideo() {
     if (!this.isImageLoaded)
       return alert("لطفاً ابتدا یک تصویر بارگذاری کنید!");
     const audioFile = this.audioUpload.files[0];
     if (!audioFile) return alert("لطفاً ابتدا یک فایل صوتی (MP3) انتخاب کنید!");
 
-    // Stop live preview before recording
     if (this.previewAnimationId) {
       cancelAnimationFrame(this.previewAnimationId);
       this.previewAnimationId = null;
@@ -708,17 +689,42 @@ class ImageEditor {
     this.generateVideoBtn.disabled = true;
 
     try {
-      // Get user-specified duration
       const durationSec = parseFloat(this.videoDurationInput.value) || 5;
       this.videoDuration = durationSec * 1000;
-
       this.generateVideoBtn.innerText = `در حال ضبط ویدیو (${durationSec} ثانیه)...`;
-      const effect = this.videoEffectSelect.value;
-      const stream = this.canvas.captureStream(30);
-      const mimeType = MediaRecorder.isTypeSupported("video/webm; codecs=vp9")
-        ? "video/webm; codecs=vp9"
-        : "video/webm";
-      const recorder = new MediaRecorder(stream, { mimeType });
+
+      // 1. Setup Audio Capture (No Server Upload!)
+      const audioUrl = URL.createObjectURL(audioFile);
+      const audioElement = new Audio(audioUrl);
+
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioContext = new AudioContext();
+      if (audioContext.state === "suspended") await audioContext.resume();
+
+      const source = audioContext.createMediaElementSource(audioElement);
+      const destination = audioContext.createMediaStreamDestination();
+
+      // Connect audio to destination (to capture) AND speakers (so user can hear it)
+      source.connect(destination);
+      source.connect(audioContext.destination);
+
+      // 2. Setup Video Capture & Combine Streams
+      const videoStream = this.canvas.captureStream(30);
+      const audioTracks = destination.stream.getAudioTracks();
+      audioTracks.forEach((track) => videoStream.addTrack(track));
+
+      // Determine best mimeType (MP4 for iOS/Safari, WebM for others)
+      let mimeType = "video/mp4";
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = "video/webm; codecs=vp9,opus";
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = "video/webm; codecs=vp8,opus";
+          if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = "video/webm";
+        }
+      }
+
+      const ext = mimeType.includes("mp4") ? "mp4" : "webm";
+      const recorder = new MediaRecorder(videoStream, { mimeType });
       const chunks = [];
 
       recorder.ondataavailable = (e) => {
@@ -726,43 +732,34 @@ class ImageEditor {
       };
 
       recorder.onstop = async () => {
-        this.generateVideoBtn.innerText = "در حال پردازش نهایی و دانلود...";
-        const videoBlob = new Blob(chunks, { type: "video/webm" });
-        const formData = new FormData();
-        formData.append("video", videoBlob, "animation.webm");
-        formData.append("audio", audioFile);
-        formData.append("duration", durationSec); // Send duration to server
+        this.generateVideoBtn.innerText = "در حال دانلود...";
 
-        try {
-          const response = await fetch("api/generate-video", {
-            method: "POST",
-            body: formData,
-          });
-          if (!response.ok)
-            throw new Error((await response.json()).error || "Server error");
+        // Create final video blob (contains BOTH video and audio!)
+        const videoBlob = new Blob(chunks, { type: mimeType });
+        const filename =
+          this.currentlyEditingIndex !== null
+            ? `video_quote_${this.currentlyEditingIndex + 1}.${ext}`
+            : `quote-video.${ext}`;
 
-          const blob = await response.blob();
-          const filename =
-            this.currentlyEditingIndex !== null
-              ? `video_quote_${this.currentlyEditingIndex + 1}.mp4`
-              : "quote-video.mp4";
+        // 🔥 DIRECTLY DOWNLOAD TO DEVICE! NO SERVER UPLOAD!
+        saveAs(videoBlob, filename);
 
-          // Use FileSaver.js for 100% cross-device download compatibility
-          saveAs(blob, filename);
+        // Cleanup
+        URL.revokeObjectURL(audioUrl);
+        audioContext.close();
 
-          alert("✅ ویدیو با موفقیت ساخته و دانلود شد!");
-        } catch (error) {
-          console.error(error);
-          alert("خطا در ساخت ویدیو: " + error.message);
-        } finally {
-          this.draw();
-          this.generateVideoBtn.innerText = originalBtnText;
-          this.generateVideoBtn.disabled = false;
-        }
+        this.draw();
+        this.generateVideoBtn.innerText = originalBtnText;
+        this.generateVideoBtn.disabled = false;
+        alert("✅ ویدیو با موفقیت ساخته و دانلود شد!");
       };
 
+      // 3. Start Recording and Animation
       recorder.start();
+      audioElement.play(); // Start playing audio so it gets captured
+
       let startTime = null;
+      const effect = this.videoEffectSelect.value;
       const particles = Array.from({ length: 80 }, () => ({
         x: Math.random() * this.canvas.width,
         y: Math.random() * this.canvas.height,
@@ -774,17 +771,16 @@ class ImageEditor {
       const animate = (timestamp) => {
         if (!startTime) startTime = timestamp;
         const progress = (timestamp - startTime) / this.videoDuration;
+
         if (progress >= 1) {
           recorder.stop();
+          audioElement.pause();
           return;
         }
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.filter = this.imageStyle === "none" ? "none" : this.imageStyle;
-
-        // Use the extracted effect logic
         this.applyEffect(effect, progress, timestamp, particles);
-
         this.ctx.filter = "none";
         this.drawText();
 
@@ -793,12 +789,13 @@ class ImageEditor {
       requestAnimationFrame(animate);
     } catch (error) {
       console.error(error);
-      alert("خطا در خواندن فایل صوتی یا ساخت ویدیو: " + error.message);
+      alert("خطا در ساخت ویدیو: " + error.message);
       this.draw();
       this.generateVideoBtn.innerText = originalBtnText;
       this.generateVideoBtn.disabled = false;
     }
   }
+
   updateBatchCount() {
     if (!this.batchTexts || !this.batchCount) return;
     const lines = this.batchTexts.value
@@ -806,6 +803,7 @@ class ImageEditor {
       .filter((line) => line.trim() !== "");
     this.batchCount.textContent = `(${lines.length})`;
   }
+
   generateBatch() {
     if (!this.isImageLoaded)
       return alert("لطفاً ابتدا یک تصویر بارگذاری کنید!");
