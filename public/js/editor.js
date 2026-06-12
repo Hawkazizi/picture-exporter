@@ -671,7 +671,7 @@ class ImageEditor {
   }
 
   // ==========================================
-  // 🔥 100% CLIENT-SIDE VIDEO GENERATION
+  // 🔥 100% CLIENT-SIDE VIDEO GENERATION (NO SERVER UPLOAD!)
   // ==========================================
   async generateVideo() {
     if (!this.isImageLoaded)
