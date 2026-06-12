@@ -3,91 +3,91 @@
 ========================== */
 @font-face {
     font-family: "BNazanin";
-    src: url("/fonts/BNazanin.ttf") format("truetype");
+    src: url("../fonts/BNazanin.ttf") format("truetype");
 }
 @font-face {
     font-family: "BSahra";
-    src: url("/fonts/BSahra.ttf") format("truetype");
+    src: url("../fonts/BSahra.ttf") format("truetype");
 }
 @font-face {
     font-family: "BYekan";
-    src: url("/fonts/BYekan.ttf") format("truetype");
+    src: url("../fonts/BYekan.ttf") format("truetype");
 }
 @font-face {
     font-family: "Callite";
-    src: url("/fonts/Callite.ttf") format("truetype");
+    src: url("../fonts/Callite.ttf") format("truetype");
 }
 @font-face {
     font-family: "CANAVAR";
-    src: url("/fonts/CANAVAR.ttf") format("truetype");
+    src: url("../fonts/CANAVAR.ttf") format("truetype");
 }
 @font-face {
     font-family: "Decoration";
-    src: url("/fonts/Decoration.otf") format("opentype");
+    src: url("../fonts/Decoration.otf") format("opentype");
 }
 @font-face {
     font-family: "Deep Hero";
-    src: url("/fonts/Deep Hero.ttf") format("truetype");
+    src: url("../fonts/Deep Hero.ttf") format("truetype");
 }
 @font-face {
     font-family: "Diane Amorta";
-    src: url("/fonts/Diane Amorta.otf") format("opentype");
+    src: url("../fonts/Diane Amorta.otf") format("opentype");
 }
 @font-face {
     font-family: "Gemini";
-    src: url("/fonts/Gemini.ttf") format("truetype");
+    src: url("../fonts/Gemini.ttf") format("truetype");
 }
 @font-face {
     font-family: "Handwash";
-    src: url("/fonts/Handwash.otf") format("opentype");
+    src: url("../fonts/Handwash.otf") format("opentype");
 }
 @font-face {
     font-family: "Honey Crepes";
-    src: url("/fonts/Honey Crepes.ttf") format("truetype");
+    src: url("../fonts/Honey Crepes.ttf") format("truetype");
 }
 @font-face {
     font-family: "IranNastaliq";
-    src: url("/fonts/IranNastaliq.ttf") format("truetype");
+    src: url("../fonts/IranNastaliq.ttf") format("truetype");
 }
 @font-face {
     font-family: "Mandana MRT";
-    src: url("/fonts/Mandana_MRT.TTF") format("truetype");
+    src: url("../fonts/Mandana_MRT.TTF") format("truetype");
 }
 @font-face {
     font-family: "Party Script";
-    src: url("/fonts/Party Script.otf") format("opentype");
+    src: url("../fonts/Party Script.otf") format("opentype");
 }
 @font-face {
     font-family: "Rockers Garage";
-    src: url("/fonts/Rockers Garage.ttf") format("truetype");
+    src: url("../fonts/Rockers Garage.ttf") format("truetype");
 }
 @font-face {
     font-family: "Runtoe";
-    src: url("/fonts/Runtoe.ttf") format("truetype");
+    src: url("../fonts/Runtoe.ttf") format("truetype");
 }
 @font-face {
     font-family: "Shablon MRT";
-    src: url("/fonts/Shablon_MRT.ttf") format("truetype");
+    src: url("../fonts/Shablon_MRT.ttf") format("truetype");
 }
 @font-face {
     font-family: "SHUTTLE-X";
-    src: url("/fonts/SHUTTLE-X.ttf") format("truetype");
+    src: url("../fonts/SHUTTLE-X.ttf") format("truetype");
 }
 @font-face {
     font-family: "Sunny Spells Basic";
-    src: url("/fonts/Sunny Spells Basic.ttf") format("truetype");
+    src: url("../fonts/Sunny Spells Basic.ttf") format("truetype");
 }
 @font-face {
     font-family: "The Kanzie TTF";
-    src: url("/fonts/The Kanzie TTF.ttf") format("truetype");
+    src: url("../fonts/The Kanzie TTF.ttf") format("truetype");
 }
 @font-face {
     font-family: "Think Smart";
-    src: url("/fonts/Think Smart .ttf") format("truetype");
+    src: url("../fonts/Think Smart .ttf") format("truetype");
 }
 @font-face {
     font-family: "Young Man";
-    src: url("/fonts/Young Man.otf") format("opentype");
+    src: url("../fonts/Young Man.otf") format("opentype");
 }
 
 :root {

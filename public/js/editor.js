@@ -734,7 +734,7 @@ class ImageEditor {
         formData.append("duration", durationSec); // Send duration to server
 
         try {
-          const response = await fetch("/api/generate-video", {
+          const response = await fetch("api/generate-video", {
             method: "POST",
             body: formData,
           });
