@@ -693,7 +693,7 @@ class ImageEditor {
       this.videoDuration = durationSec * 1000;
       this.generateVideoBtn.innerText = `در حال ضبط ویدیو (${durationSec} ثانیه)...`;
 
-      // 1. Setup Audio Capture (No Server Upload!)
+      // 1. Setup Audio Capture
       const audioUrl = URL.createObjectURL(audioFile);
       const audioElement = new Audio(audioUrl);
 
@@ -704,26 +704,29 @@ class ImageEditor {
       const source = audioContext.createMediaElementSource(audioElement);
       const destination = audioContext.createMediaStreamDestination();
 
-      // Connect audio to destination (to capture) AND speakers (so user can hear it)
       source.connect(destination);
-      source.connect(audioContext.destination);
 
       // 2. Setup Video Capture & Combine Streams
       const videoStream = this.canvas.captureStream(30);
       const audioTracks = destination.stream.getAudioTracks();
       audioTracks.forEach((track) => videoStream.addTrack(track));
 
-      // Determine best mimeType (MP4 for iOS/Safari, WebM for others)
-      let mimeType = "video/mp4";
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
+      // 🔥 IMPROVED: Better mimeType detection for iOS/Safari compatibility
+      let mimeType = "video/webm";
+      let ext = "webm";
+      if (
+        MediaRecorder.isTypeSupported(
+          "video/mp4; codecs=avc1.42E01E, mp4a.40.2",
+        )
+      ) {
+        mimeType = "video/mp4; codecs=avc1.42E01E, mp4a.40.2";
+        ext = "mp4";
+      } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp9,opus")) {
         mimeType = "video/webm; codecs=vp9,opus";
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-          mimeType = "video/webm; codecs=vp8,opus";
-          if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = "video/webm";
-        }
+      } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp8,opus")) {
+        mimeType = "video/webm; codecs=vp8,opus";
       }
 
-      const ext = mimeType.includes("mp4") ? "mp4" : "webm";
       const recorder = new MediaRecorder(videoStream, { mimeType });
       const chunks = [];
 
@@ -732,31 +735,48 @@ class ImageEditor {
       };
 
       recorder.onstop = async () => {
-        this.generateVideoBtn.innerText = "در حال دانلود...";
-
-        // Create final video blob (contains BOTH video and audio!)
+        // Create final video blob
         const videoBlob = new Blob(chunks, { type: mimeType });
         const filename =
           this.currentlyEditingIndex !== null
             ? `video_quote_${this.currentlyEditingIndex + 1}.${ext}`
             : `quote-video.${ext}`;
 
-        // 🔥 DIRECTLY DOWNLOAD TO DEVICE! NO SERVER UPLOAD!
-        saveAs(videoBlob, filename);
+        // 🔥 THE FIX: Create a Blob URL and turn the button into a direct download link.
+        // This completely bypasses browser download blockers on HTTPS sites.
+        const blobUrl = URL.createObjectURL(videoBlob);
+        const btn = this.generateVideoBtn;
 
-        // Cleanup
+        btn.innerText = "⬇ دانلود ویدیو (کلیک کنید)";
+        btn.disabled = false;
+        btn.style.backgroundColor = "#2563eb"; // Make it look clickable
+
+        btn.onclick = () => {
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+
+          // Reset button after download
+          setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+            btn.innerText = originalBtnText;
+            btn.style.backgroundColor = "";
+            btn.onclick = () => this.generateVideo();
+          }, 1000);
+        };
+
+        // Cleanup audio
         URL.revokeObjectURL(audioUrl);
         audioContext.close();
-
         this.draw();
-        this.generateVideoBtn.innerText = originalBtnText;
-        this.generateVideoBtn.disabled = false;
-        alert("✅ ویدیو با موفقیت ساخته و دانلود شد!");
       };
 
       // 3. Start Recording and Animation
       recorder.start();
-      audioElement.play(); // Start playing audio so it gets captured
+      audioElement.play();
 
       let startTime = null;
       const effect = this.videoEffectSelect.value;
