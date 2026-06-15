@@ -4,8 +4,8 @@ class ImageEditor {
     this.ctx = this.canvas.getContext("2d");
     this.placeholder = document.getElementById("placeholderText");
 
-    this.images = []; // Now stores ImageBitmaps for ultra-fast drawing
-    this.imageSrcs = []; // Stores original DataURLs for fast thumbnail rendering
+    this.images = [];
+    this.imageSrcs = [];
     this.activeImageIndex = -1;
     this.generatedByImage = [];
 
@@ -34,7 +34,6 @@ class ImageEditor {
     this.videoDuration = 5000;
     this.previewAnimationId = null;
 
-    // 🔥 Performance: Debounce timers
     this.typingDebounce = null;
     this.sliderDebounce = null;
 
@@ -145,7 +144,6 @@ class ImageEditor {
       this.handleImageUpload(e),
     );
 
-    // 🔥 Performance: Debounced input handling
     this.textInput.addEventListener("input", (e) => {
       this.text = e.target.value;
       this.draw();
@@ -231,9 +229,6 @@ class ImageEditor {
     this.generateVideoBtn.addEventListener("click", () => this.generateVideo());
   }
 
-  // ==========================================
-  // 🔥 PERFORMANCE: Sync thumbnail only when needed
-  // ==========================================
   syncThumbnail() {
     if (this.currentlyEditingGenerated) {
       const { imgIndex, genIndex } = this.currentlyEditingGenerated;
@@ -248,9 +243,6 @@ class ImageEditor {
     }
   }
 
-  // ==========================================
-  // 🔥 MANUAL DRAWING ZONE LOGIC
-  // ==========================================
   startDrawingZone(imgIndex) {
     const btn = document.querySelector(
       `.draw-zone-btn[data-index="${imgIndex}"]`,
@@ -277,9 +269,6 @@ class ImageEditor {
       .scrollIntoView({ behavior: "smooth" });
   }
 
-  // ==========================================
-  // 🔥 PERFORMANCE: Off-Main-Thread Image Processing
-  // ==========================================
   handleImageUpload(e) {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -292,7 +281,7 @@ class ImageEditor {
       const reader = new FileReader();
       reader.onload = async (event) => {
         const dataUrl = event.target.result;
-        this.imageSrcs[index] = dataUrl; // Save for fast thumbnails
+        this.imageSrcs[index] = dataUrl;
 
         const img = new Image();
         img.onload = async () => {
@@ -313,7 +302,6 @@ class ImageEditor {
     const baseWidth = tempImages[0].width;
     const baseHeight = tempImages[0].height;
 
-    // 🔥 Use createImageBitmap for ultra-fast, non-blocking resizing
     for (let index = 0; index < tempImages.length; index++) {
       const img = tempImages[index];
       if (img.width === baseWidth && img.height === baseHeight) {
@@ -362,9 +350,6 @@ class ImageEditor {
     this.editVideoControls.classList.remove("hidden");
   }
 
-  // ==========================================
-  // UI RENDERING
-  // ==========================================
   renderImageSelector() {
     const container = this.imageSelector;
     container.innerHTML = "";
@@ -466,9 +451,6 @@ class ImageEditor {
     });
   }
 
-  // ==========================================
-  // 🔥 PERFORMANCE: Binary Search Font Fitting (100x Faster)
-  // ==========================================
   checkTextFits(text, fontSize, maxWidthPx, maxHeightPx) {
     this.ctx.font = `${fontSize}px "${this.fontFamily}"`;
     const words = text.split(" ");
@@ -541,7 +523,6 @@ class ImageEditor {
       let currentFontSize = origFontSize;
 
       if (zone) {
-        // 🔥 BINARY SEARCH instead of linear loop
         let minSize = 10;
         let maxSize = Math.min(
           1000,
@@ -555,9 +536,9 @@ class ImageEditor {
             this.checkTextFits(currentText, midSize, maxWidthPx, maxHeightPx)
           ) {
             fittedSize = midSize;
-            minSize = midSize + 1; // Try to find a larger size that still fits
+            minSize = midSize + 1;
           } else {
-            maxSize = midSize - 1; // Too big, shrink
+            maxSize = midSize - 1;
           }
         }
         currentFontSize = fittedSize;
@@ -662,7 +643,6 @@ class ImageEditor {
       .scrollIntoView({ behavior: "smooth" });
   }
 
-  // 🔥 PERFORMANCE: Removed heavy toDataURL from continuous updates
   updateEditingState() {
     if (this.currentlyEditingGenerated) {
       const { imgIndex, genIndex } = this.currentlyEditingGenerated;
@@ -689,9 +669,6 @@ class ImageEditor {
     }
   }
 
-  // ==========================================
-  // DOWNLOADS
-  // ==========================================
   downloadImage() {
     if (!this.isImageLoaded)
       return alert("لطفاً ابتدا یک تصویر بارگذاری کنید!");
@@ -733,9 +710,6 @@ class ImageEditor {
     btn.disabled = false;
   }
 
-  // ==========================================
-  // CANVAS DRAWING & EFFECTS
-  // ==========================================
   draw() {
     if (!this.isImageLoaded) return;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -913,7 +887,7 @@ class ImageEditor {
     if (this.isDragging) {
       this.isDragging = false;
       this.canvas.style.cursor = "crosshair";
-      this.syncThumbnail(); // 🔥 Update thumbnail only when drag finishes
+      this.syncThumbnail();
     }
   }
 
@@ -939,6 +913,12 @@ class ImageEditor {
     );
   }
 
+  // ==========================================
+  // 🔥 UPDATED: 4-Second Preview + Smooth Text Animation
+  // ==========================================
+  // ==========================================
+  // 🔥 UPDATED: 4-Second Preview (Stops, No Loop) + Smooth Text Animation
+  // ==========================================
   startEffectPreview(effect) {
     if (this.previewAnimationId) cancelAnimationFrame(this.previewAnimationId);
     if (!this.isImageLoaded || effect === "none") {
@@ -953,19 +933,52 @@ class ImageEditor {
       opacity: Math.random() * 0.6 + 0.1,
     }));
     let startTime = null;
-    const previewDuration = 5000;
+    const previewDuration = 4000; // 🔥 4 seconds
+
     const animate = (timestamp) => {
       if (!startTime) startTime = timestamp;
       let progress = (timestamp - startTime) / previewDuration;
+
+      // 🔥 FIX: Stop the animation after 4 seconds instead of looping!
       if (progress >= 1) {
-        startTime = timestamp;
-        progress = 0;
+        progress = 1; // Lock to the final frame
+
+        // Draw the final static frame
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.filter = this.imageStyle === "none" ? "none" : this.imageStyle;
+        this.applyEffect(effect, progress, timestamp, particles);
+        this.ctx.filter = "none";
+        this.drawText();
+
+        this.previewAnimationId = null; // Clear the animation ID
+        return; // 🔥 Stop the loop immediately!
       }
+
+      // 🔥 Smooth Text Animation (Fade In + Scale)
+      let textAlpha = 1;
+      let textScale = 1;
+      const fadeInDuration = 0.15; // First 15% of the preview
+      if (progress < fadeInDuration) {
+        const p = progress / fadeInDuration;
+        const ease = 1 - Math.pow(1 - p, 3); // Smooth easeOutCubic
+        textAlpha = ease;
+        textScale = 0.8 + 0.2 * ease; // Scale from 80% to 100%
+      }
+
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.filter = this.imageStyle === "none" ? "none" : this.imageStyle;
       this.applyEffect(effect, progress, timestamp, particles);
       this.ctx.filter = "none";
+
+      // 🔥 Apply smooth text animation
+      this.ctx.save();
+      this.ctx.globalAlpha = textAlpha;
+      this.ctx.translate(this.textX, this.textY);
+      this.ctx.scale(textScale, textScale);
+      this.ctx.translate(-this.textX, -this.textY);
       this.drawText();
+      this.ctx.restore();
+
       this.previewAnimationId = requestAnimationFrame(animate);
     };
     this.previewAnimationId = requestAnimationFrame(animate);
@@ -1206,6 +1219,9 @@ class ImageEditor {
     }
   }
 
+  // ==========================================
+  // 🔥 UPDATED: Smooth Text Animation in Exported Video
+  // ==========================================
   async generateVideo() {
     if (!this.isImageLoaded)
       return alert("لطفاً ابتدا یک تصویر بارگذاری کنید!");
@@ -1289,6 +1305,7 @@ class ImageEditor {
         speed: Math.random() * 1.5 + 0.5,
         opacity: Math.random() * 0.6 + 0.1,
       }));
+
       const animate = (timestamp) => {
         if (!startTime) startTime = timestamp;
         const progress = (timestamp - startTime) / this.videoDuration;
@@ -1297,11 +1314,32 @@ class ImageEditor {
           audioElement.pause();
           return;
         }
+
+        // 🔥 Smooth Text Animation (Fade In + Scale)
+        let textAlpha = 1;
+        let textScale = 1;
+        const fadeInDuration = 0.15; // First 15% of the video
+        if (progress < fadeInDuration) {
+          const p = progress / fadeInDuration;
+          const ease = 1 - Math.pow(1 - p, 3); // Smooth easeOutCubic
+          textAlpha = ease;
+          textScale = 0.8 + 0.2 * ease; // Scale from 80% to 100%
+        }
+
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.filter = this.imageStyle === "none" ? "none" : this.imageStyle;
         this.applyEffect(effect, progress, timestamp, particles);
         this.ctx.filter = "none";
+
+        // 🔥 Apply smooth text animation
+        this.ctx.save();
+        this.ctx.globalAlpha = textAlpha;
+        this.ctx.translate(this.textX, this.textY);
+        this.ctx.scale(textScale, textScale);
+        this.ctx.translate(-this.textX, -this.textY);
         this.drawText();
+        this.ctx.restore();
+
         requestAnimationFrame(animate);
       };
       requestAnimationFrame(animate);
