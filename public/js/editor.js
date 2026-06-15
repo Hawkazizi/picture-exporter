@@ -146,6 +146,14 @@ class ImageEditor {
 
     this.textInput.addEventListener("input", (e) => {
       this.text = e.target.value;
+
+      // 🔥 Auto-detect RTL/LTR for the input field itself
+      const isRTL =
+        /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+          this.text,
+        );
+      this.textInput.dir = isRTL ? "rtl" : "ltr";
+
       this.draw();
       this.updateEditingState();
       clearTimeout(this.typingDebounce);
@@ -375,7 +383,6 @@ class ImageEditor {
       .forEach((el, i) => el.classList.toggle("active", i === index));
     this.draw();
   }
-
   renderSidebarTextareas() {
     if (!this.imageTextsContainer) return;
     this.imageTextsContainer.innerHTML = "";
@@ -390,9 +397,17 @@ class ImageEditor {
       textarea.id = `textForImage_${index}`;
       textarea.rows = 3;
       textarea.placeholder = `متن ۱ برای تصویر ${index + 1}\nمتن ۲ برای تصویر ${index + 1}...`;
-      textarea.addEventListener("input", () =>
-        this.updateCategoryTextsPreviews(),
-      );
+
+      // 🔥 UPDATED: Auto-detect RTL/LTR for the batch textareas
+      textarea.addEventListener("input", (e) => {
+        const isRTL =
+          /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+            e.target.value,
+          );
+        e.target.dir = isRTL ? "rtl" : "ltr";
+        this.updateCategoryTextsPreviews();
+      });
+
       itemDiv.appendChild(thumbnail);
       itemDiv.appendChild(label);
       itemDiv.appendChild(textarea);
@@ -452,6 +467,12 @@ class ImageEditor {
   }
 
   checkTextFits(text, fontSize, maxWidthPx, maxHeightPx) {
+    // 🔥 Auto-detect RTL/LTR for accurate width measurement
+    const isRTL = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+      text,
+    );
+    this.ctx.direction = isRTL ? "rtl" : "ltr";
+
     this.ctx.font = `${fontSize}px "${this.fontFamily}"`;
     const words = text.split(" ");
     const lines = [];
@@ -569,10 +590,16 @@ class ImageEditor {
         currentText.length > 40
           ? currentText.substring(0, 40) + "..."
           : currentText;
+      const isRTL =
+        /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+          currentText,
+        );
+      const dirAttr = isRTL ? "rtl" : "ltr";
+
       itemEl.innerHTML = `
         <img src="${dataUrl}" alt="Generated">
         <div class="batch-item-content">
-          <div class="batch-item-text">${displayText}</div>
+          <div class="batch-item-text" dir="${dirAttr}">${displayText}</div>
           <div class="batch-item-actions">
             <button class="edit-btn">ویرایش</button>
             <button class="download-btn">دانلود</button>
@@ -661,14 +688,21 @@ class ImageEditor {
 
       const itemEl = document.getElementById(`gen-${imgIndex}-${genIndex}`);
       if (itemEl) {
-        itemEl.querySelector(".batch-item-text").textContent =
+        const textEl = itemEl.querySelector(".batch-item-text");
+        textEl.textContent =
           this.text.length > 40
             ? this.text.substring(0, 40) + "..."
             : this.text;
+
+        // 🔥 UPDATED: Fix direction when editing text
+        const isRTL =
+          /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+            this.text,
+          );
+        textEl.dir = isRTL ? "rtl" : "ltr";
       }
     }
   }
-
   downloadImage() {
     if (!this.isImageLoaded)
       return alert("لطفاً ابتدا یک تصویر بارگذاری کنید!");
@@ -743,7 +777,14 @@ class ImageEditor {
     if (!this.text || !this.isImageLoaded) return;
     if (this.isDrawingZone) this.ctx.globalAlpha = 0.3;
 
+    // 🔥 Auto-detect RTL/LTR for correct Canvas rendering and punctuation placement
+    const isRTL = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+      this.text,
+    );
+    this.ctx.direction = isRTL ? "rtl" : "ltr";
+
     const maxWidth = (this.canvas.width * this.textBoxWidthPercent) / 100;
+
     const maxHeight = (this.canvas.height * this.textBoxHeightPercent) / 100;
     const lineHeight = this.fontSize * 1.4;
     const words = this.text.split(" ");
