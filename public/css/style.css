@@ -586,3 +586,69 @@ canvas {
     min-height: 50vh;
   }
 }
+/* ========================================= */
+/* AUTO-ALIGN BUTTON STYLES                  */
+/* ========================================= */
+.auto-align-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+  margin-top: 4px;
+}
+
+.auto-align-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
+}
+
+.auto-align-btn:active {
+  transform: translateY(0);
+}
+
+.auto-align-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+/* ========================================= */
+/* CATEGORY ACTION BUTTONS STYLES            */
+/* ========================================= */
+.category-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.category-actions button {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.category-actions .secondary-btn {
+  background-color: #f3f4f6;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.category-actions .secondary-btn:hover {
+  background-color: #e5e7eb;
+  color: var(--text-primary);
+}
+
+/* Ensure the primary generate button stands out */
+.category-actions .primary-btn {
+  padding: 6px 14px;
+  font-size: 0.85rem;
+}
