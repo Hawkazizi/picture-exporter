@@ -33,6 +33,7 @@ class ImageEditor {
     this.dragStartY = 0;
     this.videoDuration = 5000;
     this.previewAnimationId = null;
+    this.watermarkImage = null; // 🔥 NEW: Watermark state
 
     this.typingDebounce = null;
     this.sliderDebounce = null;
@@ -70,6 +71,7 @@ class ImageEditor {
     this.videoDuration = 5000;
     this.textBoxWidthPercent = 80;
     this.textBoxHeightPercent = 40;
+    this.watermarkImage = null; // 🔥 NEW
 
     if (this.textInput) this.textInput.value = "";
     if (this.fontFamilySelect) this.fontFamilySelect.value = "BYekan";
@@ -94,6 +96,7 @@ class ImageEditor {
     if (this.imageUpload) this.imageUpload.value = "";
     if (this.audioUpload) this.audioUpload.value = "";
     if (this.videoDurationInput) this.videoDurationInput.value = 5;
+    if (this.watermarkUpload) this.watermarkUpload.value = ""; // 🔥 NEW
 
     if (this.textBoxWidthInput) {
       this.textBoxWidthInput.value = 80;
@@ -137,6 +140,7 @@ class ImageEditor {
     this.imageTextsContainer = document.getElementById("imageTextsContainer");
     this.imageSelector = document.getElementById("imageSelector");
     this.categorizedPreviews = document.getElementById("categorizedPreviews");
+    this.watermarkUpload = document.getElementById("watermarkUpload"); // 🔥 NEW
   }
 
   bindEvents() {
@@ -235,6 +239,9 @@ class ImageEditor {
 
     this.downloadBtn.addEventListener("click", () => this.downloadImage());
     this.generateVideoBtn.addEventListener("click", () => this.generateVideo());
+    this.watermarkUpload.addEventListener("change", (e) =>
+      this.handleWatermarkUpload(e),
+    ); // 🔥 NEW
   }
 
   syncThumbnail() {
@@ -744,6 +751,49 @@ class ImageEditor {
     btn.disabled = false;
   }
 
+  // ==========================================
+  // 🔥 WATERMARK LOGIC
+  // ==========================================
+  handleWatermarkUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        this.watermarkImage = img;
+        this.draw();
+        this.syncThumbnail();
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  drawWatermark() {
+    if (!this.watermarkImage || !this.isImageLoaded) return;
+
+    // Calculate size: 15% of the smallest dimension to prevent overflow
+    const maxDim = Math.min(this.canvas.width, this.canvas.height);
+    const targetWidth = maxDim * 0.15;
+    const aspectRatio = this.watermarkImage.height / this.watermarkImage.width;
+    const targetHeight = targetWidth * aspectRatio;
+
+    // Calculate position: bottom right with a 2% margin
+    const margin = maxDim * 0.02;
+    const x = this.canvas.width - targetWidth - margin;
+    const y = this.canvas.height - targetHeight - margin;
+
+    // Set opacity to 70% so it looks professional
+    const originalAlpha = this.ctx.globalAlpha;
+    this.ctx.globalAlpha = 0.7;
+
+    this.ctx.drawImage(this.watermarkImage, x, y, targetWidth, targetHeight);
+
+    // Restore original alpha
+    this.ctx.globalAlpha = originalAlpha;
+  }
+
   draw() {
     if (!this.isImageLoaded) return;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -751,6 +801,9 @@ class ImageEditor {
     this.ctx.drawImage(this.image, 0, 0, this.canvas.width, this.canvas.height);
     this.ctx.filter = "none";
     this.drawText();
+
+    // 🔥 Draw watermark on top of everything
+    this.drawWatermark();
 
     if (this.tempDrawRect) {
       this.ctx.fillStyle = "rgba(37, 99, 235, 0.2)";
@@ -955,9 +1008,6 @@ class ImageEditor {
   }
 
   // ==========================================
-  // 🔥 UPDATED: 4-Second Preview + Smooth Text Animation
-  // ==========================================
-  // ==========================================
   // 🔥 UPDATED: 4-Second Preview (Stops, No Loop) + Smooth Text Animation
   // ==========================================
   startEffectPreview(effect) {
@@ -991,6 +1041,9 @@ class ImageEditor {
         this.ctx.filter = "none";
         this.drawText();
 
+        // 🔥 Draw watermark in final frame
+        this.drawWatermark();
+
         this.previewAnimationId = null; // Clear the animation ID
         return; // 🔥 Stop the loop immediately!
       }
@@ -1019,6 +1072,9 @@ class ImageEditor {
       this.ctx.translate(-this.textX, -this.textY);
       this.drawText();
       this.ctx.restore();
+
+      // 🔥 Draw watermark in preview
+      this.drawWatermark();
 
       this.previewAnimationId = requestAnimationFrame(animate);
     };
@@ -1380,6 +1436,9 @@ class ImageEditor {
         this.ctx.translate(-this.textX, -this.textY);
         this.drawText();
         this.ctx.restore();
+
+        // 🔥 Draw watermark in video
+        this.drawWatermark();
 
         requestAnimationFrame(animate);
       };
