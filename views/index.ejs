@@ -14,6 +14,14 @@
     <div class="app-container">
       <!-- Sidebar Controls -->
       <aside class="controls-panel">
+        <!-- 🔥 NEW: Reset Button -->
+        <button
+          id="resetBtn"
+          class="secondary-btn"
+          style="margin-top: 8px; width: 100%"
+        >
+          🔄 پاک‌سازی و شروع مجدد (Reset)
+        </button>
         <h1>ویرایشگر تصویر</h1>
 
         <div class="control-group">
@@ -145,6 +153,7 @@
             </option>
           </select>
         </div>
+
         <div class="control-group">
           <label for="watermarkUpload">💧 واترمارک (اختیاری)</label>
           <input
@@ -161,17 +170,30 @@
             می‌گیرد.
           </p>
         </div>
+
+        <div class="control-group">
+          <label for="allTexts"
+            >متن‌ها (هر خط یک خروجی - تقسیم بین تصاویر)</label
+          >
+          <textarea
+            id="allTexts"
+            rows="15"
+            placeholder="متن ۱&#10;متن ۲&#10;..."
+            autocomplete="off"
+          ></textarea>
+          <p
+            class="hint"
+            style="font-size: 0.75rem; margin-top: 4px; text-align: right"
+          >
+            متن‌ها به ترتیب و به صورت مساوی بین تمام تصاویر بارگذاری شده تقسیم
+            می‌شوند.
+          </p>
+        </div>
+
         <div class="control-group">
           <button id="downloadBtn" class="primary-btn">
             ⬇ دانلود تصویر کانواس
           </button>
-        </div>
-
-        <div class="control-group">
-          <label>متن‌های هر تصویر</label>
-          <div id="imageTextsContainer" class="image-texts-container">
-            <p class="hint">ابتدا تصاویر را بارگذاری کنید...</p>
-          </div>
         </div>
       </aside>
 

@@ -33,7 +33,7 @@ class ImageEditor {
     this.dragStartY = 0;
     this.videoDuration = 5000;
     this.previewAnimationId = null;
-    this.watermarkImage = null; // 🔥 NEW: Watermark state
+    this.watermarkImage = null;
 
     this.typingDebounce = null;
     this.sliderDebounce = null;
@@ -71,7 +71,7 @@ class ImageEditor {
     this.videoDuration = 5000;
     this.textBoxWidthPercent = 80;
     this.textBoxHeightPercent = 40;
-    this.watermarkImage = null; // 🔥 NEW
+    this.watermarkImage = null;
 
     if (this.textInput) this.textInput.value = "";
     if (this.fontFamilySelect) this.fontFamilySelect.value = "BYekan";
@@ -85,9 +85,8 @@ class ImageEditor {
     }
     if (this.imageStyleSelect) this.imageStyleSelect.value = "none";
 
-    if (this.imageTextsContainer)
-      this.imageTextsContainer.innerHTML =
-        '<p class="hint">ابتدا تصاویر را بارگذاری کنید...</p>';
+    if (this.allTextsTextarea) this.allTextsTextarea.value = "";
+
     if (this.imageSelector)
       this.imageSelector.innerHTML =
         '<p class="hint">ابتدا تصاویر را بارگذاری کنید...</p>';
@@ -96,7 +95,7 @@ class ImageEditor {
     if (this.imageUpload) this.imageUpload.value = "";
     if (this.audioUpload) this.audioUpload.value = "";
     if (this.videoDurationInput) this.videoDurationInput.value = 5;
-    if (this.watermarkUpload) this.watermarkUpload.value = ""; // 🔥 NEW
+    if (this.watermarkUpload) this.watermarkUpload.value = "";
 
     if (this.textBoxWidthInput) {
       this.textBoxWidthInput.value = 80;
@@ -116,6 +115,14 @@ class ImageEditor {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this.placeholder) this.placeholder.style.display = "block";
     if (this.editVideoControls) this.editVideoControls.classList.add("hidden");
+
+    // 🔥 FIX: Reset the video generation button state if it was changed
+    if (this.generateVideoBtn) {
+      this.generateVideoBtn.innerText = "🎥 ساخت و دانلود ویدیو";
+      this.generateVideoBtn.disabled = false;
+      this.generateVideoBtn.style.backgroundColor = "";
+      this.generateVideoBtn.onclick = () => this.generateVideo();
+    }
   }
 
   initElements() {
@@ -137,10 +144,14 @@ class ImageEditor {
     this.textBoxWidthValue = document.getElementById("textBoxWidthValue");
     this.textBoxHeightInput = document.getElementById("textBoxHeight");
     this.textBoxHeightValue = document.getElementById("textBoxHeightValue");
-    this.imageTextsContainer = document.getElementById("imageTextsContainer");
     this.imageSelector = document.getElementById("imageSelector");
     this.categorizedPreviews = document.getElementById("categorizedPreviews");
-    this.watermarkUpload = document.getElementById("watermarkUpload"); // 🔥 NEW
+    this.watermarkUpload = document.getElementById("watermarkUpload");
+
+    this.allTextsTextarea = document.getElementById("allTexts");
+
+    // 🔥 NEW: Reference to the reset button
+    this.resetBtn = document.getElementById("resetBtn");
   }
 
   bindEvents() {
@@ -150,14 +161,11 @@ class ImageEditor {
 
     this.textInput.addEventListener("input", (e) => {
       this.text = e.target.value;
-
-      // 🔥 Auto-detect RTL/LTR for the input field itself
       const isRTL =
         /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
           this.text,
         );
       this.textInput.dir = isRTL ? "rtl" : "ltr";
-
       this.draw();
       this.updateEditingState();
       clearTimeout(this.typingDebounce);
@@ -241,7 +249,19 @@ class ImageEditor {
     this.generateVideoBtn.addEventListener("click", () => this.generateVideo());
     this.watermarkUpload.addEventListener("change", (e) =>
       this.handleWatermarkUpload(e),
-    ); // 🔥 NEW
+    );
+
+    this.allTextsTextarea.addEventListener("input", (e) => {
+      const isRTL =
+        /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+          e.target.value,
+        );
+      e.target.dir = isRTL ? "rtl" : "ltr";
+      this.updateCategoryTextsPreviews();
+    });
+
+    // 🔥 NEW: Bind the reset button to the resetToDefaults method
+    this.resetBtn.addEventListener("click", () => this.resetToDefaults());
   }
 
   syncThumbnail() {
@@ -359,7 +379,6 @@ class ImageEditor {
     })();
 
     this.renderImageSelector();
-    this.renderSidebarTextareas();
     this.renderCategorizedSections();
     this.setActiveImage(0);
     this.editVideoControls.classList.remove("hidden");
@@ -389,37 +408,6 @@ class ImageEditor {
       .querySelectorAll(".image-thumb")
       .forEach((el, i) => el.classList.toggle("active", i === index));
     this.draw();
-  }
-  renderSidebarTextareas() {
-    if (!this.imageTextsContainer) return;
-    this.imageTextsContainer.innerHTML = "";
-    this.images.forEach((img, index) => {
-      const itemDiv = document.createElement("div");
-      itemDiv.className = "image-text-item";
-      const thumbnail = document.createElement("img");
-      thumbnail.src = this.imageSrcs[index];
-      const label = document.createElement("label");
-      label.textContent = `متن‌های تصویر ${index + 1} (هر خط یک خروجی):`;
-      const textarea = document.createElement("textarea");
-      textarea.id = `textForImage_${index}`;
-      textarea.rows = 3;
-      textarea.placeholder = `متن ۱ برای تصویر ${index + 1}\nمتن ۲ برای تصویر ${index + 1}...`;
-
-      // 🔥 UPDATED: Auto-detect RTL/LTR for the batch textareas
-      textarea.addEventListener("input", (e) => {
-        const isRTL =
-          /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
-            e.target.value,
-          );
-        e.target.dir = isRTL ? "rtl" : "ltr";
-        this.updateCategoryTextsPreviews();
-      });
-
-      itemDiv.appendChild(thumbnail);
-      itemDiv.appendChild(label);
-      itemDiv.appendChild(textarea);
-      this.imageTextsContainer.appendChild(itemDiv);
-    });
   }
 
   renderCategorizedSections() {
@@ -458,23 +446,38 @@ class ImageEditor {
   }
 
   updateCategoryTextsPreviews() {
+    if (!this.allTextsTextarea) return;
+    const lines = this.allTextsTextarea.value
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l !== "");
+
+    const totalTexts = lines.length;
+    const numImages = this.images.length;
+
     this.images.forEach((img, i) => {
-      const textarea = document.getElementById(`textForImage_${i}`);
       const previewEl = document.querySelector(
         `#category-${i} .category-texts-preview`,
       );
-      if (textarea && previewEl) {
-        const lines = textarea.value.split("\n").filter((l) => l.trim() !== "");
-        previewEl.textContent =
-          lines.length > 0
-            ? `${lines.length} متن وارد شده است.`
-            : "هنوز متنی وارد نشده است.";
+      if (previewEl) {
+        if (totalTexts === 0 || numImages === 0) {
+          previewEl.textContent = "هنوز متنی وارد نشده است.";
+        } else {
+          const baseCount = Math.floor(totalTexts / numImages);
+          const remainder = totalTexts % numImages;
+          const countForThis = baseCount + (i < remainder ? 1 : 0);
+
+          if (countForThis === 0) {
+            previewEl.textContent = "متنی به این تصویر اختصاص نیافته است.";
+          } else {
+            previewEl.textContent = `${countForThis} متن از ${totalTexts} متن به این تصویر اختصاص یافته است.`;
+          }
+        }
       }
     });
   }
 
   checkTextFits(text, fontSize, maxWidthPx, maxHeightPx) {
-    // 🔥 Auto-detect RTL/LTR for accurate width measurement
     const isRTL = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
       text,
     );
@@ -509,14 +512,28 @@ class ImageEditor {
   }
 
   generateForImage(imgIndex) {
-    const textarea = document.getElementById(`textForImage_${imgIndex}`);
-    if (!textarea) return;
-    const texts = textarea.value
+    if (!this.allTextsTextarea) return;
+
+    const allLines = this.allTextsTextarea.value
       .split("\n")
       .map((t) => t.trim())
       .filter((t) => t !== "");
+
+    if (allLines.length === 0) return alert("لطفاً حداقل یک متن وارد کنید!");
+
+    const numImages = this.images.length;
+    const baseCount = Math.floor(allLines.length / numImages);
+    const remainder = allLines.length % numImages;
+
+    let startIndex = 0;
+    for (let i = 0; i < imgIndex; i++) {
+      startIndex += baseCount + (i < remainder ? 1 : 0);
+    }
+    const countForThisImage = baseCount + (imgIndex < remainder ? 1 : 0);
+
+    const texts = allLines.slice(startIndex, startIndex + countForThisImage);
     if (texts.length === 0)
-      return alert("لطفاً حداقل یک متن برای این تصویر وارد کنید!");
+      return alert("متنی برای این تصویر باقی نمانده است!");
 
     const originalImage = this.image;
     const originalText = this.text;
@@ -701,7 +718,6 @@ class ImageEditor {
             ? this.text.substring(0, 40) + "..."
             : this.text;
 
-        // 🔥 UPDATED: Fix direction when editing text
         const isRTL =
           /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
             this.text,
@@ -710,6 +726,7 @@ class ImageEditor {
       }
     }
   }
+
   downloadImage() {
     if (!this.isImageLoaded)
       return alert("لطفاً ابتدا یک تصویر بارگذاری کنید!");
@@ -751,9 +768,6 @@ class ImageEditor {
     btn.disabled = false;
   }
 
-  // ==========================================
-  // 🔥 WATERMARK LOGIC
-  // ==========================================
   handleWatermarkUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -772,25 +786,16 @@ class ImageEditor {
 
   drawWatermark() {
     if (!this.watermarkImage || !this.isImageLoaded) return;
-
-    // Calculate size: 15% of the smallest dimension to prevent overflow
     const maxDim = Math.min(this.canvas.width, this.canvas.height);
     const targetWidth = maxDim * 0.15;
     const aspectRatio = this.watermarkImage.height / this.watermarkImage.width;
     const targetHeight = targetWidth * aspectRatio;
-
-    // Calculate position: bottom right with a 2% margin
     const margin = maxDim * 0.02;
     const x = this.canvas.width - targetWidth - margin;
     const y = this.canvas.height - targetHeight - margin;
-
-    // Set opacity to 70% so it looks professional
     const originalAlpha = this.ctx.globalAlpha;
     this.ctx.globalAlpha = 0.7;
-
     this.ctx.drawImage(this.watermarkImage, x, y, targetWidth, targetHeight);
-
-    // Restore original alpha
     this.ctx.globalAlpha = originalAlpha;
   }
 
@@ -801,8 +806,6 @@ class ImageEditor {
     this.ctx.drawImage(this.image, 0, 0, this.canvas.width, this.canvas.height);
     this.ctx.filter = "none";
     this.drawText();
-
-    // 🔥 Draw watermark on top of everything
     this.drawWatermark();
 
     if (this.tempDrawRect) {
@@ -830,14 +833,12 @@ class ImageEditor {
     if (!this.text || !this.isImageLoaded) return;
     if (this.isDrawingZone) this.ctx.globalAlpha = 0.3;
 
-    // 🔥 Auto-detect RTL/LTR for correct Canvas rendering and punctuation placement
     const isRTL = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
       this.text,
     );
     this.ctx.direction = isRTL ? "rtl" : "ltr";
 
     const maxWidth = (this.canvas.width * this.textBoxWidthPercent) / 100;
-
     const maxHeight = (this.canvas.height * this.textBoxHeightPercent) / 100;
     const lineHeight = this.fontSize * 1.4;
     const words = this.text.split(" ");
@@ -1007,9 +1008,6 @@ class ImageEditor {
     );
   }
 
-  // ==========================================
-  // 🔥 UPDATED: 4-Second Preview (Stops, No Loop) + Smooth Text Animation
-  // ==========================================
   startEffectPreview(effect) {
     if (this.previewAnimationId) cancelAnimationFrame(this.previewAnimationId);
     if (!this.isImageLoaded || effect === "none") {
@@ -1024,39 +1022,32 @@ class ImageEditor {
       opacity: Math.random() * 0.6 + 0.1,
     }));
     let startTime = null;
-    const previewDuration = 4000; // 🔥 4 seconds
+    const previewDuration = 4000;
 
     const animate = (timestamp) => {
       if (!startTime) startTime = timestamp;
       let progress = (timestamp - startTime) / previewDuration;
 
-      // 🔥 FIX: Stop the animation after 4 seconds instead of looping!
       if (progress >= 1) {
-        progress = 1; // Lock to the final frame
-
-        // Draw the final static frame
+        progress = 1;
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.filter = this.imageStyle === "none" ? "none" : this.imageStyle;
         this.applyEffect(effect, progress, timestamp, particles);
         this.ctx.filter = "none";
         this.drawText();
-
-        // 🔥 Draw watermark in final frame
         this.drawWatermark();
-
-        this.previewAnimationId = null; // Clear the animation ID
-        return; // 🔥 Stop the loop immediately!
+        this.previewAnimationId = null;
+        return;
       }
 
-      // 🔥 Smooth Text Animation (Fade In + Scale)
       let textAlpha = 1;
       let textScale = 1;
-      const fadeInDuration = 0.15; // First 15% of the preview
+      const fadeInDuration = 0.15;
       if (progress < fadeInDuration) {
         const p = progress / fadeInDuration;
-        const ease = 1 - Math.pow(1 - p, 3); // Smooth easeOutCubic
+        const ease = 1 - Math.pow(1 - p, 3);
         textAlpha = ease;
-        textScale = 0.8 + 0.2 * ease; // Scale from 80% to 100%
+        textScale = 0.8 + 0.2 * ease;
       }
 
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -1064,7 +1055,6 @@ class ImageEditor {
       this.applyEffect(effect, progress, timestamp, particles);
       this.ctx.filter = "none";
 
-      // 🔥 Apply smooth text animation
       this.ctx.save();
       this.ctx.globalAlpha = textAlpha;
       this.ctx.translate(this.textX, this.textY);
@@ -1072,10 +1062,7 @@ class ImageEditor {
       this.ctx.translate(-this.textX, -this.textY);
       this.drawText();
       this.ctx.restore();
-
-      // 🔥 Draw watermark in preview
       this.drawWatermark();
-
       this.previewAnimationId = requestAnimationFrame(animate);
     };
     this.previewAnimationId = requestAnimationFrame(animate);
@@ -1316,9 +1303,6 @@ class ImageEditor {
     }
   }
 
-  // ==========================================
-  // 🔥 UPDATED: Smooth Text Animation in Exported Video
-  // ==========================================
   async generateVideo() {
     if (!this.isImageLoaded)
       return alert("لطفاً ابتدا یک تصویر بارگذاری کنید!");
@@ -1412,15 +1396,14 @@ class ImageEditor {
           return;
         }
 
-        // 🔥 Smooth Text Animation (Fade In + Scale)
         let textAlpha = 1;
         let textScale = 1;
-        const fadeInDuration = 0.15; // First 15% of the video
+        const fadeInDuration = 0.15;
         if (progress < fadeInDuration) {
           const p = progress / fadeInDuration;
-          const ease = 1 - Math.pow(1 - p, 3); // Smooth easeOutCubic
+          const ease = 1 - Math.pow(1 - p, 3);
           textAlpha = ease;
-          textScale = 0.8 + 0.2 * ease; // Scale from 80% to 100%
+          textScale = 0.8 + 0.2 * ease;
         }
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -1428,7 +1411,6 @@ class ImageEditor {
         this.applyEffect(effect, progress, timestamp, particles);
         this.ctx.filter = "none";
 
-        // 🔥 Apply smooth text animation
         this.ctx.save();
         this.ctx.globalAlpha = textAlpha;
         this.ctx.translate(this.textX, this.textY);
@@ -1436,10 +1418,7 @@ class ImageEditor {
         this.ctx.translate(-this.textX, -this.textY);
         this.drawText();
         this.ctx.restore();
-
-        // 🔥 Draw watermark in video
         this.drawWatermark();
-
         requestAnimationFrame(animate);
       };
       requestAnimationFrame(animate);
