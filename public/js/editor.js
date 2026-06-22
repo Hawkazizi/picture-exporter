@@ -149,8 +149,8 @@ class ImageEditor {
     this.watermarkUpload = document.getElementById("watermarkUpload");
 
     this.allTextsTextarea = document.getElementById("allTexts");
+    this.downloadAllZipBtn = document.getElementById("downloadAllZipBtn");
 
-    // 🔥 NEW: Reference to the reset button
     this.resetBtn = document.getElementById("resetBtn");
   }
 
@@ -259,8 +259,11 @@ class ImageEditor {
       e.target.dir = isRTL ? "rtl" : "ltr";
       this.updateCategoryTextsPreviews();
     });
-
-    // 🔥 NEW: Bind the reset button to the resetToDefaults method
+    if (this.downloadAllZipBtn) {
+      this.downloadAllZipBtn.addEventListener("click", () =>
+        this.downloadAllCategoriesZip(),
+      );
+    }
     this.resetBtn.addEventListener("click", () => this.resetToDefaults());
   }
 
@@ -277,10 +280,53 @@ class ImageEditor {
       }
     }
   }
+  async downloadAllCategoriesZip() {
+    // Check if there are any generated images at all
+    let totalItems = 0;
+    this.generatedByImage.forEach((items) => {
+      if (items) totalItems += items.length;
+    });
 
+    if (totalItems === 0) return alert("هیچ تصویری برای دانلود وجود ندارد!");
+
+    const btn = this.downloadAllZipBtn;
+    const originalText = btn.innerText;
+    btn.innerText = "در حال آماده‌سازی...";
+    btn.disabled = true;
+
+    try {
+      const zip = new JSZip();
+
+      // Loop through all categories (background images)
+      this.generatedByImage.forEach((items, imgIndex) => {
+        if (!items || items.length === 0) return;
+
+        // Create a separate folder inside the ZIP for each category
+        const folder = zip.folder(`category_${imgIndex + 1}`);
+
+        // Add each generated text image into its respective category folder
+        items.forEach((item, genIndex) => {
+          folder.file(`text_${genIndex + 1}.png`, item.dataUrl.split(",")[1], {
+            base64: true,
+          });
+        });
+      });
+
+      // Generate the single massive ZIP and trigger download
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `all_categories_${Date.now()}.zip`);
+    } catch (err) {
+      console.error(err);
+      alert("خطا در ساخت فایل ZIP");
+    } finally {
+      btn.innerText = originalText;
+      btn.disabled = false;
+    }
+  }
   startDrawingZone(imgIndex) {
+    // 🔥 UPDATED: Changed selector to .draw-zone-btn-thumb
     const btn = document.querySelector(
-      `.draw-zone-btn[data-index="${imgIndex}"]`,
+      `.draw-zone-btn-thumb[data-index="${imgIndex}"]`,
     );
     if (btn) {
       btn.innerText = "✋ رسم ناحیه";
@@ -294,7 +340,7 @@ class ImageEditor {
     this.canvas.style.cursor = "crosshair";
 
     if (btn) {
-      btn.innerText = "⏳ در حال رسم... (روی کانواس بکشید)";
+      btn.innerText = "⏳ در حال رسم...";
       btn.style.backgroundColor = "#f59e0b";
       btn.style.color = "white";
     }
@@ -391,7 +437,21 @@ class ImageEditor {
       const thumb = document.createElement("div");
       thumb.className =
         "image-thumb" + (i === this.activeImageIndex ? " active" : "");
-      thumb.innerHTML = `<img src="${this.imageSrcs[i]}" alt="Image ${i + 1}"><span>تصویر ${i + 1}</span>`;
+
+      // 🔥 UPDATED: Added the Draw Zone button directly inside the thumbnail
+      thumb.innerHTML = `
+        <img src="${this.imageSrcs[i]}" alt="Image ${i + 1}">
+        <span>تصویر ${i + 1}</span>
+        <button class="draw-zone-btn-thumb" data-index="${i}" style="margin-top: 8px; font-size: 0.75rem; padding: 5px 8px; width: 100%; box-sizing: border-box; background: #e5e7eb; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; color: #374151; font-weight: bold;">✋ رسم ناحیه</button>
+      `;
+
+      // Prevent the button click from triggering the thumbnail's "setActiveImage" click
+      const btn = thumb.querySelector(".draw-zone-btn-thumb");
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        this.startDrawingZone(i);
+      };
+
       thumb.onclick = () => this.setActiveImage(i);
       container.appendChild(thumb);
     });
@@ -418,6 +478,7 @@ class ImageEditor {
       section.className = "category-section";
       section.id = `category-${i}`;
 
+      // 🔥 UPDATED: Removed the draw-zone-btn from the category-actions div
       section.innerHTML = `
         <div class="category-header">
           <img src="${this.imageSrcs[i]}" class="category-thumb" alt="Image ${i + 1}">
@@ -427,7 +488,6 @@ class ImageEditor {
           </div>
           <div class="category-actions">
             <button class="primary-btn generate-cat-btn" data-index="${i}">✨ تولید</button>
-            <button class="secondary-btn draw-zone-btn" data-index="${i}">✋ رسم ناحیه</button>
             <button class="secondary-btn download-cat-btn hidden" data-index="${i}">⬇ ZIP</button>
           </div>
         </div>
@@ -439,8 +499,8 @@ class ImageEditor {
         this.generateForImage(i);
       section.querySelector(".download-cat-btn").onclick = () =>
         this.downloadCategoryZip(i);
-      section.querySelector(".draw-zone-btn").onclick = () =>
-        this.startDrawingZone(i);
+
+      // 🔥 UPDATED: Removed the old draw-zone-btn onclick binding
     });
     this.updateCategoryTextsPreviews();
   }
@@ -942,8 +1002,10 @@ class ImageEditor {
       const rect = this.tempDrawRect;
       const width = Math.abs(rect.x2 - rect.x1);
       const height = Math.abs(rect.y2 - rect.y1);
+
+      // 🔥 UPDATED: Changed selector to .draw-zone-btn-thumb
       const btn = document.querySelector(
-        `.draw-zone-btn[data-index="${this.drawingZoneForIndex}"]`,
+        `.draw-zone-btn-thumb[data-index="${this.drawingZoneForIndex}"]`,
       );
 
       if (width > 20 && height > 20) {
