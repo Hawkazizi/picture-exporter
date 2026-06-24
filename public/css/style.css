@@ -1,3 +1,121 @@
+/* =========================================
+   FONT DECLARATIONS (Matched to your VPS files)
+   ========================================= */
+
+/* Persian Fonts */
+@font-face {
+  font-family: "BNazanin";
+  src: url("/fonts/BNazanin.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "BSahra";
+  src: url("/fonts/BSahra.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "BYekan";
+  src: url("/fonts/BYekan.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "IranNastaliq";
+  src: url("/fonts/IranNastaliq.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Mandana MRT";
+  src: url("/fonts/Mandana_MRT.TTF") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Shablon MRT";
+  src: url("/fonts/Shablon_MRT.ttf") format("truetype");
+  font-display: swap;
+}
+
+/* English/Decorative Fonts */
+@font-face {
+  font-family: "Callite";
+  src: url("/fonts/Callite.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "CANAVAR";
+  src: url("/fonts/CANAVAR.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Decoration";
+  src: url("/fonts/Decoration.otf") format("opentype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Deep Hero";
+  src: url("/fonts/Deep%20Hero.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Diane Amorta";
+  src: url("/fonts/Diane%20Amorta.otf") format("opentype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Gemini";
+  src: url("/fonts/Gemini.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Handwash";
+  src: url("/fonts/Handwash.otf") format("opentype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Honey Crepes";
+  src: url("/fonts/Honey%20Crepes.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Party Script";
+  src: url("/fonts/Party%20Script.otf") format("opentype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Rockers Garage";
+  src: url("/fonts/Rockers%20Garage.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Runtoe";
+  src: url("/fonts/Runtoe.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "SHUTTLE-X";
+  src: url("/fonts/SHUTTLE-X.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Sunny Spells Basic";
+  src: url("/fonts/Sunny%20Spells%20Basic.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "The Kanzie TTF";
+  src: url("/fonts/The%20Kanzie%20TTF.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Think Smart";
+  src: url("/fonts/Think%20Smart%20.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Young Man";
+  src: url("/fonts/Young%20Man.otf") format("opentype");
+  font-display: swap;
+}
+
 /* ==========================
    Local Fonts
 ========================== */

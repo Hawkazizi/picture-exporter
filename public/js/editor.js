@@ -41,6 +41,36 @@ class ImageEditor {
     this.initElements();
     this.bindEvents();
     this.resetToDefaults();
+    // 🔥 NEW: Preload all fonts in the background for instant switching
+    const allFonts = [
+      "BNazanin",
+      "BSahra",
+      "BYekan",
+      "IranNastaliq",
+      "Mandana MRT",
+      "Shablon MRT",
+      "Callite",
+      "CANAVAR",
+      "Decoration",
+      "Deep Hero",
+      "Diane Amorta",
+      "Gemini",
+      "Handwash",
+      "Honey Crepes",
+      "Party Script",
+      "Rockers Garage",
+      "Runtoe",
+      "SHUTTLE-X",
+      "Sunny Spells Basic",
+      "The Kanzie TTF",
+      "Think Smart",
+      "Young Man",
+    ];
+
+    allFonts.forEach((font) => {
+      // This forces the browser to download the font files immediately
+      document.fonts.load(`16px "${font}"`).catch(() => {});
+    });
 
     document.fonts.ready.then(() => {
       this.draw();
