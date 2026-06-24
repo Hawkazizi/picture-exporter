@@ -105,6 +105,20 @@ class ImageEditor {
 
     if (this.textInput) this.textInput.value = "";
     if (this.fontFamilySelect) this.fontFamilySelect.value = "BYekan";
+    if (this.customFontOptions) {
+      const defaultOpt = this.customFontOptions.querySelector(
+        '.custom-font-option[data-value="BYekan"]',
+      );
+      if (defaultOpt) {
+        this.customFontSelectedText.textContent = defaultOpt.textContent.trim();
+        this.customFontSelectedText.style.fontFamily =
+          defaultOpt.style.fontFamily;
+        this.customFontOptions
+          .querySelectorAll(".custom-font-option")
+          .forEach((o) => o.classList.remove("active"));
+        defaultOpt.classList.add("active");
+      }
+    }
     if (this.fontSizeInput) {
       this.fontSizeInput.value = 40;
       if (this.fontSizeValue) this.fontSizeValue.textContent = 40;
@@ -182,6 +196,18 @@ class ImageEditor {
     this.downloadAllZipBtn = document.getElementById("downloadAllZipBtn");
 
     this.resetBtn = document.getElementById("resetBtn");
+    this.customFontSelect = document.getElementById("fontFamilyCustom");
+    if (this.customFontSelect) {
+      this.customFontHeader = this.customFontSelect.querySelector(
+        ".custom-font-select-header",
+      );
+      this.customFontOptions = this.customFontSelect.querySelector(
+        ".custom-font-select-options",
+      );
+      this.customFontSelectedText = document.getElementById(
+        "fontFamilySelectedText",
+      );
+    }
   }
 
   bindEvents() {
@@ -295,6 +321,52 @@ class ImageEditor {
       );
     }
     this.resetBtn.addEventListener("click", () => this.resetToDefaults());
+
+    // 🔥 NEW: Custom Font Dropdown Events
+    if (this.customFontHeader) {
+      this.customFontHeader.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.customFontSelect.classList.toggle("open");
+        this.customFontOptions.classList.toggle("hidden");
+      });
+
+      this.customFontOptions
+        .querySelectorAll(".custom-font-option")
+        .forEach((opt) => {
+          opt.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const value = opt.getAttribute("data-value");
+            const fontName = opt.style.fontFamily;
+            const text = opt.textContent.trim();
+
+            // Update visual state
+            this.customFontSelectedText.textContent = text;
+            this.customFontSelectedText.style.fontFamily = fontName;
+
+            // Update active state
+            this.customFontOptions
+              .querySelectorAll(".custom-font-option")
+              .forEach((o) => o.classList.remove("active"));
+            opt.classList.add("active");
+
+            // Close dropdown
+            this.customFontSelect.classList.remove("open");
+            this.customFontOptions.classList.add("hidden");
+
+            // 🔥 MAGIC: Update hidden select and trigger your existing change logic
+            this.fontFamilySelect.value = value;
+            this.fontFamilySelect.dispatchEvent(new Event("change"));
+          });
+        });
+
+      // Close dropdown when clicking outside
+      document.addEventListener("click", (e) => {
+        if (!this.customFontSelect.contains(e.target)) {
+          this.customFontSelect.classList.remove("open");
+          this.customFontOptions.classList.add("hidden");
+        }
+      });
+    }
   }
 
   syncThumbnail() {
@@ -763,6 +835,20 @@ class ImageEditor {
     this.textBoxHeightPercent = itemData.textBoxHeightPercent || 40;
     this.textInput.value = this.text;
     this.fontFamilySelect.value = this.fontFamily;
+    if (this.customFontOptions) {
+      const customOpt = this.customFontOptions.querySelector(
+        `.custom-font-option[data-value="${this.fontFamily}"]`,
+      );
+      if (customOpt) {
+        this.customFontSelectedText.textContent = customOpt.textContent.trim();
+        this.customFontSelectedText.style.fontFamily =
+          customOpt.style.fontFamily;
+        this.customFontOptions
+          .querySelectorAll(".custom-font-option")
+          .forEach((o) => o.classList.remove("active"));
+        customOpt.classList.add("active");
+      }
+    }
     this.fontSizeInput.value = this.fontSize;
     this.fontSizeValue.textContent = this.fontSize;
     this.textColorInput.value = this.textColor;

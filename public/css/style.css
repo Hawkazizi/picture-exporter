@@ -770,3 +770,83 @@ canvas {
   padding: 6px 14px;
   font-size: 0.85rem;
 }
+/* ========================================= */
+/* CUSTOM FONT SELECT STYLES                 */
+/* ========================================= */
+.custom-font-select {
+  position: relative;
+  width: 100%;
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.custom-font-select-header {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.2s;
+  min-height: 38px;
+}
+
+.custom-font-select-header:hover {
+  border-color: var(--primary-color);
+}
+
+.custom-font-arrow {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+}
+
+.custom-font-select.open .custom-font-arrow {
+  transform: rotate(180deg);
+}
+
+.custom-font-select-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-top: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.custom-font-optgroup {
+  padding: 8px 12px 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: #f9fafb;
+  position: sticky;
+  top: 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.custom-font-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 1.15rem; /* Slightly larger so the font styles are clearly visible */
+  text-align: right;
+}
+
+.custom-font-option:hover {
+  background-color: #f3f4f6;
+}
+
+.custom-font-option.active {
+  background-color: #eff6ff;
+  color: var(--primary-color);
+  font-weight: 600;
+}

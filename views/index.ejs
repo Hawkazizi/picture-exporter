@@ -47,130 +47,211 @@
 
         <div class="control-group">
           <label for="fontFamily">نوع قلم</label>
-          <select id="fontFamily" autocomplete="off">
+
+          <!-- 1. Hidden native select (keeps your existing JS logic 100% intact) -->
+          <select id="fontFamily" style="display: none" autocomplete="off">
             <optgroup label="🇮🇷 قلم‌های فارسی">
-              <option
-                value="BNazanin"
+              <option value="BNazanin">B Nazanin (بی نازنین)</option>
+              <option value="BSahra">B Sahra (بی صحرا)</option>
+              <option value="BYekan" selected>B Yekan (بی یکان)</option>
+              <option value="IranNastaliq">
+                Iran Nastaliq (ایران نستعلیق)
+              </option>
+              <option value="Mandana MRT">Mandana (ماندانا)</option>
+              <option value="Shablon MRT">Shablon (شابلون)</option>
+            </optgroup>
+            <optgroup label="🇬🇧 قلم‌های انگلیسی و تزئینی">
+              <option value="Callite">Callite</option>
+              <option value="CANAVAR">CANAVAR</option>
+              <option value="Decoration">Decoration</option>
+              <option value="Deep Hero">Deep Hero</option>
+              <option value="Diane Amorta">Diane Amorta</option>
+              <option value="Gemini">Gemini</option>
+              <option value="Handwash">Handwash</option>
+              <option value="Honey Crepes">Honey Crepes</option>
+              <option value="Party Script">Party Script</option>
+              <option value="Rockers Garage">Rockers Garage</option>
+              <option value="Runtoe">Runtoe</option>
+              <option value="SHUTTLE-X">SHUTTLE-X</option>
+              <option value="Sunny Spells Basic">Sunny Spells Basic</option>
+              <option value="The Kanzie TTF">The Kanzie TTF</option>
+              <option value="Think Smart">Think Smart</option>
+              <option value="Young Man">Young Man</option>
+            </optgroup>
+          </select>
+
+          <!-- 2. Custom Visual Dropdown (Shows actual font styles) -->
+          <div class="custom-font-select" id="fontFamilyCustom">
+            <div class="custom-font-select-header">
+              <span
+                id="fontFamilySelectedText"
+                style="font-family: &quot;BYekan&quot;"
+                >B Yekan (بی یکان)</span
+              >
+              <span class="custom-font-arrow">▼</span>
+            </div>
+            <div class="custom-font-select-options hidden">
+              <div class="custom-font-optgroup">🇮🇷 قلم‌های فارسی</div>
+              <div
+                class="custom-font-option"
+                data-value="BNazanin"
                 style="font-family: &quot;BNazanin&quot;"
               >
                 B Nazanin (بی نازنین)
-              </option>
-              <option value="BSahra" style="font-family: &quot;BSahra&quot;">
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="BSahra"
+                style="font-family: &quot;BSahra&quot;"
+              >
                 B Sahra (بی صحرا)
-              </option>
-              <option
-                value="BYekan"
+              </div>
+              <div
+                class="custom-font-option active"
+                data-value="BYekan"
                 style="font-family: &quot;BYekan&quot;"
-                selected
               >
                 B Yekan (بی یکان)
-              </option>
-              <option
-                value="IranNastaliq"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="IranNastaliq"
                 style="font-family: &quot;IranNastaliq&quot;"
               >
                 Iran Nastaliq (ایران نستعلیق)
-              </option>
-              <option
-                value="Mandana MRT"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Mandana MRT"
                 style="font-family: &quot;Mandana MRT&quot;"
               >
                 Mandana (ماندانا)
-              </option>
-              <option
-                value="Shablon MRT"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Shablon MRT"
                 style="font-family: &quot;Shablon MRT&quot;"
               >
                 Shablon (شابلون)
-              </option>
-            </optgroup>
-            <optgroup label="🇬🇧 قلم‌های انگلیسی و تزئینی">
-              <option value="Callite" style="font-family: &quot;Callite&quot;">
+              </div>
+
+              <div class="custom-font-optgroup">
+                🇬🇧 قلم‌های انگلیسی و تزئینی
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Callite"
+                style="font-family: &quot;Callite&quot;"
+              >
                 Callite
-              </option>
-              <option value="CANAVAR" style="font-family: &quot;CANAVAR&quot;">
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="CANAVAR"
+                style="font-family: &quot;CANAVAR&quot;"
+              >
                 CANAVAR
-              </option>
-              <option
-                value="Decoration"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Decoration"
                 style="font-family: &quot;Decoration&quot;"
               >
                 Decoration
-              </option>
-              <option
-                value="Deep Hero"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Deep Hero"
                 style="font-family: &quot;Deep Hero&quot;"
               >
                 Deep Hero
-              </option>
-              <option
-                value="Diane Amorta"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Diane Amorta"
                 style="font-family: &quot;Diane Amorta&quot;"
               >
                 Diane Amorta
-              </option>
-              <option value="Gemini" style="font-family: &quot;Gemini&quot;">
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Gemini"
+                style="font-family: &quot;Gemini&quot;"
+              >
                 Gemini
-              </option>
-              <option
-                value="Handwash"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Handwash"
                 style="font-family: &quot;Handwash&quot;"
               >
                 Handwash
-              </option>
-              <option
-                value="Honey Crepes"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Honey Crepes"
                 style="font-family: &quot;Honey Crepes&quot;"
               >
                 Honey Crepes
-              </option>
-              <option
-                value="Party Script"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Party Script"
                 style="font-family: &quot;Party Script&quot;"
               >
                 Party Script
-              </option>
-              <option
-                value="Rockers Garage"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Rockers Garage"
                 style="font-family: &quot;Rockers Garage&quot;"
               >
                 Rockers Garage
-              </option>
-              <option value="Runtoe" style="font-family: &quot;Runtoe&quot;">
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Runtoe"
+                style="font-family: &quot;Runtoe&quot;"
+              >
                 Runtoe
-              </option>
-              <option
-                value="SHUTTLE-X"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="SHUTTLE-X"
                 style="font-family: &quot;SHUTTLE-X&quot;"
               >
                 SHUTTLE-X
-              </option>
-              <option
-                value="Sunny Spells Basic"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Sunny Spells Basic"
                 style="font-family: &quot;Sunny Spells Basic&quot;"
               >
                 Sunny Spells Basic
-              </option>
-              <option
-                value="The Kanzie TTF"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="The Kanzie TTF"
                 style="font-family: &quot;The Kanzie TTF&quot;"
               >
                 The Kanzie TTF
-              </option>
-              <option
-                value="Think Smart"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Think Smart"
                 style="font-family: &quot;Think Smart&quot;"
               >
                 Think Smart
-              </option>
-              <option
-                value="Young Man"
+              </div>
+              <div
+                class="custom-font-option"
+                data-value="Young Man"
                 style="font-family: &quot;Young Man&quot;"
               >
                 Young Man
-              </option>
-            </optgroup>
-          </select>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="control-group">
