@@ -41,7 +41,8 @@ class ImageEditor {
     this.initElements();
     this.bindEvents();
     this.resetToDefaults();
-    // 🔥 NEW: Preload all fonts in the background for instant switching
+
+    // 🔥 Preload all fonts in the background for instant switching
     const allFonts = [
       "BNazanin",
       "BSahra",
@@ -68,7 +69,6 @@ class ImageEditor {
     ];
 
     allFonts.forEach((font) => {
-      // This forces the browser to download the font files immediately
       document.fonts.load(`16px "${font}"`).catch(() => {});
     });
 
@@ -160,7 +160,6 @@ class ImageEditor {
     if (this.placeholder) this.placeholder.style.display = "block";
     if (this.editVideoControls) this.editVideoControls.classList.add("hidden");
 
-    // 🔥 FIX: Reset the video generation button state if it was changed
     if (this.generateVideoBtn) {
       this.generateVideoBtn.innerText = "🎥 ساخت و دانلود ویدیو";
       this.generateVideoBtn.disabled = false;
@@ -322,7 +321,6 @@ class ImageEditor {
     }
     this.resetBtn.addEventListener("click", () => this.resetToDefaults());
 
-    // 🔥 NEW: Custom Font Dropdown Events
     if (this.customFontHeader) {
       this.customFontHeader.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -339,27 +337,22 @@ class ImageEditor {
             const fontName = opt.style.fontFamily;
             const text = opt.textContent.trim();
 
-            // Update visual state
             this.customFontSelectedText.textContent = text;
             this.customFontSelectedText.style.fontFamily = fontName;
 
-            // Update active state
             this.customFontOptions
               .querySelectorAll(".custom-font-option")
               .forEach((o) => o.classList.remove("active"));
             opt.classList.add("active");
 
-            // Close dropdown
             this.customFontSelect.classList.remove("open");
             this.customFontOptions.classList.add("hidden");
 
-            // 🔥 MAGIC: Update hidden select and trigger your existing change logic
             this.fontFamilySelect.value = value;
             this.fontFamilySelect.dispatchEvent(new Event("change"));
           });
         });
 
-      // Close dropdown when clicking outside
       document.addEventListener("click", (e) => {
         if (!this.customFontSelect.contains(e.target)) {
           this.customFontSelect.classList.remove("open");
@@ -382,8 +375,8 @@ class ImageEditor {
       }
     }
   }
+
   async downloadAllCategoriesZip() {
-    // Check if there are any generated images at all
     let totalItems = 0;
     this.generatedByImage.forEach((items) => {
       if (items) totalItems += items.length;
@@ -399,14 +392,9 @@ class ImageEditor {
     try {
       const zip = new JSZip();
 
-      // Loop through all categories (background images)
       this.generatedByImage.forEach((items, imgIndex) => {
         if (!items || items.length === 0) return;
-
-        // Create a separate folder inside the ZIP for each category
         const folder = zip.folder(`category_${imgIndex + 1}`);
-
-        // Add each generated text image into its respective category folder
         items.forEach((item, genIndex) => {
           folder.file(`text_${genIndex + 1}.png`, item.dataUrl.split(",")[1], {
             base64: true,
@@ -414,7 +402,6 @@ class ImageEditor {
         });
       });
 
-      // Generate the single massive ZIP and trigger download
       const content = await zip.generateAsync({ type: "blob" });
       saveAs(content, `all_categories_${Date.now()}.zip`);
     } catch (err) {
@@ -425,8 +412,8 @@ class ImageEditor {
       btn.disabled = false;
     }
   }
+
   startDrawingZone(imgIndex) {
-    // 🔥 UPDATED: Changed selector to .draw-zone-btn-thumb
     const btn = document.querySelector(
       `.draw-zone-btn-thumb[data-index="${imgIndex}"]`,
     );
@@ -530,6 +517,10 @@ class ImageEditor {
     this.renderCategorizedSections();
     this.setActiveImage(0);
     this.editVideoControls.classList.remove("hidden");
+
+    // 🔥 NEW: Show batch video controls
+    const batchControls = document.getElementById("batchVideoControls");
+    if (batchControls) batchControls.classList.remove("hidden");
   }
 
   renderImageSelector() {
@@ -540,14 +531,12 @@ class ImageEditor {
       thumb.className =
         "image-thumb" + (i === this.activeImageIndex ? " active" : "");
 
-      // 🔥 UPDATED: Added the Draw Zone button directly inside the thumbnail
       thumb.innerHTML = `
         <img src="${this.imageSrcs[i]}" alt="Image ${i + 1}">
         <span>تصویر ${i + 1}</span>
         <button class="draw-zone-btn-thumb" data-index="${i}" style="margin-top: 8px; font-size: 0.75rem; padding: 5px 8px; width: 100%; box-sizing: border-box; background: #e5e7eb; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; color: #374151; font-weight: bold;">✋ رسم ناحیه</button>
       `;
 
-      // Prevent the button click from triggering the thumbnail's "setActiveImage" click
       const btn = thumb.querySelector(".draw-zone-btn-thumb");
       btn.onclick = (e) => {
         e.stopPropagation();
@@ -580,7 +569,6 @@ class ImageEditor {
       section.className = "category-section";
       section.id = `category-${i}`;
 
-      // 🔥 UPDATED: Removed the draw-zone-btn from the category-actions div
       section.innerHTML = `
         <div class="category-header">
           <img src="${this.imageSrcs[i]}" class="category-thumb" alt="Image ${i + 1}">
@@ -601,8 +589,6 @@ class ImageEditor {
         this.generateForImage(i);
       section.querySelector(".download-cat-btn").onclick = () =>
         this.downloadCategoryZip(i);
-
-      // 🔥 UPDATED: Removed the old draw-zone-btn onclick binding
     });
     this.updateCategoryTextsPreviews();
   }
@@ -820,7 +806,8 @@ class ImageEditor {
     this.draw();
   }
 
-  startEditingGenerated(imgIndex, genIndex) {
+  // 🔥 UPDATED: Added isBatch parameter to prevent scrolling during batch generation
+  startEditingGenerated(imgIndex, genIndex, isBatch = false) {
     const itemData = this.generatedByImage[imgIndex][genIndex];
     if (!itemData) return;
     this.setActiveImage(imgIndex);
@@ -865,9 +852,13 @@ class ImageEditor {
       } catch (e) {}
       this.draw();
     })();
-    document
-      .querySelector(".canvas-wrapper")
-      .scrollIntoView({ behavior: "smooth" });
+
+    // 🔥 UPDATED: Only scroll if we are NOT in batch mode
+    if (!isBatch) {
+      document
+        .querySelector(".canvas-wrapper")
+        .scrollIntoView({ behavior: "smooth" });
+    }
   }
 
   updateEditingState() {
@@ -1119,7 +1110,6 @@ class ImageEditor {
       const width = Math.abs(rect.x2 - rect.x1);
       const height = Math.abs(rect.y2 - rect.y1);
 
-      // 🔥 UPDATED: Changed selector to .draw-zone-btn-thumb
       const btn = document.querySelector(
         `.draw-zone-btn-thumb[data-index="${this.drawingZoneForIndex}"]`,
       );
@@ -1497,6 +1487,7 @@ class ImageEditor {
       const durationSec = parseFloat(this.videoDurationInput.value) || 5;
       this.videoDuration = durationSec * 1000;
       this.generateVideoBtn.innerText = `در حال ضبط ویدیو (${durationSec} ثانیه)...`;
+
       const audioUrl = URL.createObjectURL(audioFile);
       const audioElement = new Audio(audioUrl);
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1508,37 +1499,61 @@ class ImageEditor {
       const videoStream = this.canvas.captureStream(30);
       const audioTracks = destination.stream.getAudioTracks();
       audioTracks.forEach((track) => videoStream.addTrack(track));
+
+      // 🔥 Try MP4 first, fall back to WebM
+      const types = [
+        "video/mp4; codecs=avc1.42E01E,mp4a.40.2",
+        "video/mp4",
+        "video/webm; codecs=vp9,opus",
+        "video/webm; codecs=vp8,opus",
+        "video/webm",
+      ];
+
       let mimeType = "video/webm";
       let ext = "webm";
-      if (
-        MediaRecorder.isTypeSupported(
-          "video/mp4; codecs=avc1.42E01E, mp4a.40.2",
-        )
-      ) {
-        mimeType = "video/mp4; codecs=avc1.42E01E, mp4a.40.2";
-        ext = "mp4";
-      } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp9,opus")) {
-        mimeType = "video/webm; codecs=vp9,opus";
-      } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp8,opus")) {
-        mimeType = "video/webm; codecs=vp8,opus";
+      for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) {
+          mimeType = type;
+          ext = type.includes("mp4") ? "mp4" : "webm";
+          console.log(`✅ Using codec: ${type}`);
+          break;
+        }
       }
-      const recorder = new MediaRecorder(videoStream, { mimeType });
+
+      const recorder = new MediaRecorder(videoStream, {
+        mimeType: mimeType,
+        videoBitsPerSecond: 8000000,
+        audioBitsPerSecond: 192000,
+      });
+
       const chunks = [];
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunks.push(e.data);
       };
+
       recorder.onstop = async () => {
         const videoBlob = new Blob(chunks, { type: mimeType });
-        const filename = `quote-video-${Date.now()}.${ext}`;
+
+        // Generate filename from text
+        let fileName = "quote-video";
+        if (this.text) {
+          fileName = this.text
+            .replace(/[\\/:*?"<>|]/g, "")
+            .replace(/\s+/g, "_")
+            .substring(0, 50);
+          if (!fileName) fileName = "quote-video";
+        }
+
+        const finalFilename = `${fileName}-${Date.now()}.${ext}`;
         const blobUrl = URL.createObjectURL(videoBlob);
         const btn = this.generateVideoBtn;
-        btn.innerText = "⬇ دانلود ویدیو (کلیک کنید)";
+        btn.innerText = `⬇ دانلود ویدیو ${ext.toUpperCase()} (کلیک کنید)`;
         btn.disabled = false;
         btn.style.backgroundColor = "#2563eb";
         btn.onclick = () => {
           const a = document.createElement("a");
           a.href = blobUrl;
-          a.download = filename;
+          a.download = finalFilename;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -1553,6 +1568,7 @@ class ImageEditor {
         audioContext.close();
         this.draw();
       };
+
       recorder.start();
       audioElement.play();
       let startTime = null;
@@ -1610,6 +1626,85 @@ class ImageEditor {
   }
 }
 
+// 🔥 UPDATED: DOMContentLoaded initialization with simplified Batch Video Manager logic
 document.addEventListener("DOMContentLoaded", () => {
-  new ImageEditor();
+  const editor = new ImageEditor();
+
+  // 🔥 NEW: Initialize Batch Video Manager
+  const batchManager = new BatchVideoManager(editor);
+  const batchAudioUpload = document.getElementById("batchAudioUpload");
+  const batchMp3List = document.getElementById("batchMp3List");
+  const batchEffectSelect = document.getElementById("batchEffectSelect"); // 🔥 NEW: Single effect dropdown
+  const generateBatchVideosBtn = document.getElementById(
+    "generateBatchVideosBtn",
+  );
+  const batchVideoDuration = document.getElementById("batchVideoDuration");
+  const batchProgressContainer = document.getElementById(
+    "batchProgressContainer",
+  );
+  const batchProgressBar = document.getElementById("batchProgressBar");
+  const batchProgressText = document.getElementById("batchProgressText");
+
+  let currentMp3Files = []; // 🔥 Simplified: Just store File objects
+
+  // Handle MP3 Upload and UI Generation
+  if (batchAudioUpload) {
+    batchAudioUpload.addEventListener("change", (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+
+      currentMp3Files = files; // 🔥 Just store the files
+      renderBatchMp3List();
+    });
+  }
+
+  function renderBatchMp3List() {
+    if (!batchMp3List) return;
+    batchMp3List.innerHTML = "";
+    batchMp3List.classList.remove("hidden");
+
+    currentMp3Files.forEach((file, index) => {
+      const itemDiv = document.createElement("div");
+      itemDiv.className = "batch-mp3-item";
+
+      // 🔥 Simplified: Just show the filename, no effect dropdown
+      itemDiv.innerHTML = `
+        <span class="mp3-filename" title="${file.name}">🎵 ${file.name}</span>
+      `;
+
+      batchMp3List.appendChild(itemDiv);
+    });
+  }
+
+  // Handle Batch Generation Click
+  if (generateBatchVideosBtn) {
+    generateBatchVideosBtn.addEventListener("click", () => {
+      const duration = parseFloat(batchVideoDuration.value) || 5;
+      const globalEffect = batchEffectSelect.value; // 🔥 Get the single global effect
+
+      generateBatchVideosBtn.disabled = true;
+      generateBatchVideosBtn.innerText = "⏳ در حال پردازش...";
+      batchProgressContainer.classList.remove("hidden");
+
+      // 🔥 Pass mp3Files and globalEffect instead of mp3Configs
+      batchManager.startGeneration(
+        currentMp3Files,
+        globalEffect,
+        duration,
+        (current, total, text) => {
+          if (current === -1) {
+            // Finished
+            batchProgressContainer.classList.add("hidden");
+            generateBatchVideosBtn.disabled = false;
+            generateBatchVideosBtn.innerText = "🚀 ساخت گروهی ویدیوها";
+          } else {
+            // Update Progress
+            const percent = (current / total) * 100;
+            batchProgressBar.style.width = `${percent}%`;
+            batchProgressText.innerText = text;
+          }
+        },
+      );
+    });
+  }
 });

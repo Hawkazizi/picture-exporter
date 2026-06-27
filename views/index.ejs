@@ -14,7 +14,6 @@
     <div class="app-container">
       <!-- Sidebar Controls -->
       <aside class="controls-panel">
-        <!-- 🔥 NEW: Reset Button -->
         <button
           id="resetBtn"
           class="secondary-btn"
@@ -48,7 +47,6 @@
         <div class="control-group">
           <label for="fontFamily">نوع قلم</label>
 
-          <!-- 1. Hidden native select (keeps your existing JS logic 100% intact) -->
           <select id="fontFamily" style="display: none" autocomplete="off">
             <optgroup label="🇮🇷 قلم‌های فارسی">
               <option value="BNazanin">B Nazanin (بی نازنین)</option>
@@ -80,7 +78,6 @@
             </optgroup>
           </select>
 
-          <!-- 2. Custom Visual Dropdown (Shows actual font styles) -->
           <div class="custom-font-select" id="fontFamilyCustom">
             <div class="custom-font-select-header">
               <span
@@ -459,6 +456,100 @@
               🎥 ساخت و دانلود ویدیو
             </button>
           </div>
+
+          <!-- 🔥 UPDATED: Batch Video Generation Controls -->
+          <div
+            id="batchVideoControls"
+            class="edit-video-controls hidden"
+            style="border-top-color: #8b5cf6"
+          >
+            <h3>🎬 ساخت گروهی ویدیو (Batch Video Generation)</h3>
+            <p class="hint" style="margin-bottom: 12px">
+              چندین فایل MP3 آپلود کنید. فایل‌ها به صورت چرخشی (Round-Robin) بین
+              تمام تصاویر تولید شده تقسیم می‌شوند و یک افکت واحد برای همه اعمال
+              می‌شود. خروجی MP4 (در Chrome/Safari) یا WebM (در Firefox).
+            </p>
+
+            <div class="control-group">
+              <label for="batchEffectSelect"
+                >🎨 افکت ویدیو (برای همه ویدیوها):</label
+              >
+              <select id="batchEffectSelect" autocomplete="off">
+                <option value="none">بدون افکت (ساده)</option>
+                <option value="particles">✨ ذرات معلق (Floats/Bokeh)</option>
+                <option value="kenburns">🔍 بزرگنمایی آرام (Ken Burns)</option>
+                <option value="zoomout">🔙 کوچک‌نمایی آرام (Zoom Out)</option>
+                <option value="pan">↔️ حرکت آرام افقی (Pan)</option>
+                <option value="wavy">🌊 افکت موج‌دار متحرک (Wavy)</option>
+                <option value="shake">📳 لرزش خفیف سینمایی (Shake)</option>
+                <option value="pulse">💓 ضربان آرام (Pulse)</option>
+                <option value="rotate">🔄 چرخش آرام (Rotate)</option>
+                <option value="glitch">📺 گلیچ / نویز دیجیتال (Glitch)</option>
+                <option value="vhs">📼 افکت نوار ویدیویی (VHS)</option>
+                <option value="hue">🌈 تغییر رنگ متحرک (Hue Shift)</option>
+                <option value="blur">🌫️ تاری متحرک (Blur)</option>
+                <option value="fade">🌑 محو شدن (Fade)</option>
+                <option value="zoompulse">🔎 زوم ضربانی (Zoom Pulse)</option>
+                <option value="slideleft">⬅️ اسلاید از چپ (Slide Left)</option>
+                <option value="slideup">⬆️ اسلاید از پایین (Slide Up)</option>
+                <option value="flash">⚡ فلش نوری (Flash)</option>
+                <option value="invert_pulse">
+                  🌓 ضد رنگ متحرک (Invert Pulse)
+                </option>
+                <option value="flip">🔁 چرخش افقی (Flip)</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label for="batchAudioUpload">🎵 آپلود فایل‌های MP3:</label>
+              <input
+                type="file"
+                id="batchAudioUpload"
+                accept="audio/*"
+                multiple
+                autocomplete="off"
+              />
+            </div>
+
+            <div id="batchMp3List" class="batch-mp3-list hidden">
+              <!-- Dynamically populated by JS -->
+            </div>
+
+            <div class="control-group">
+              <label for="batchVideoDuration"
+                >⏱️ مدت زمان هر ویدیو (ثانیه):</label
+              >
+              <input
+                type="number"
+                id="batchVideoDuration"
+                min="1"
+                max="120"
+                value="5"
+                step="1"
+                autocomplete="off"
+              />
+            </div>
+
+            <button
+              id="generateBatchVideosBtn"
+              class="primary-btn video-btn-style"
+              style="background-color: #8b5cf6 !important"
+            >
+              🚀 ساخت گروهی ویدیوها (MP4)
+            </button>
+
+            <div
+              id="batchProgressContainer"
+              class="batch-progress-container hidden"
+            >
+              <div class="progress-bar-wrapper">
+                <div id="batchProgressBar" class="progress-bar-fill"></div>
+              </div>
+              <p id="batchProgressText" class="progress-text">
+                در حال آماده‌سازی...
+              </p>
+            </div>
+          </div>
         </div>
 
         <div class="categorized-previews-wrapper">
@@ -469,6 +560,9 @@
       </main>
     </div>
 
+    <!-- 🔥 UPDATED: Removed FFmpeg.wasm, only include custom scripts -->
+    <script src="js/VideoRecorder.js"></script>
+    <script src="js/BatchVideoManager.js"></script>
     <script src="js/editor.js"></script>
   </body>
 </html>
