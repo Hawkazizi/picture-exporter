@@ -376,6 +376,24 @@ class ImageEditor {
     }
   }
 
+  /**
+   * 🔥 NEW: Sanitize text for use as a filename
+   */
+  sanitizeImageFilename(text, index) {
+    let sanitized = text
+      .replace(/[\\/:*?"<>|]/g, "") // Remove invalid chars
+      .replace(/\s+/g, "_") // Replace spaces with underscores
+      .replace(/[^\w\u0600-\u06FF\-]/g, "_") // Keep alphanumeric, Persian, and hyphens
+      .substring(0, 60) // Limit to 60 chars
+      .replace(/^_+|_+$/g, ""); // Remove leading/trailing underscores
+
+    if (!sanitized || sanitized.length === 0) {
+      sanitized = `image_${index + 1}`;
+    }
+
+    return `${sanitized}_${index + 1}`;
+  }
+
   async downloadAllCategoriesZip() {
     let totalItems = 0;
     this.generatedByImage.forEach((items) => {
@@ -391,19 +409,26 @@ class ImageEditor {
 
     try {
       const zip = new JSZip();
+      let globalIndex = 0; // 🔥 Track global index for unique filenames
 
+      // 🔥 FLAT STRUCTURE: No folders, all images in root
       this.generatedByImage.forEach((items, imgIndex) => {
         if (!items || items.length === 0) return;
-        const folder = zip.folder(`category_${imgIndex + 1}`);
+
         items.forEach((item, genIndex) => {
-          folder.file(`text_${genIndex + 1}.png`, item.dataUrl.split(",")[1], {
+          // 🔥 Name each image after its text content
+          const fileName = this.sanitizeImageFilename(item.text, globalIndex);
+
+          zip.file(`${fileName}.png`, item.dataUrl.split(",")[1], {
             base64: true,
           });
+
+          globalIndex++;
         });
       });
 
       const content = await zip.generateAsync({ type: "blob" });
-      saveAs(content, `all_categories_${Date.now()}.zip`);
+      saveAs(content, `all_images_${Date.now()}.zip`);
     } catch (err) {
       console.error(err);
       alert("خطا در ساخت فایل ZIP");
