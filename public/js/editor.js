@@ -381,17 +381,18 @@ class ImageEditor {
    */
   sanitizeImageFilename(text, index) {
     let sanitized = text
+      .toLowerCase() // ✅ Convert to lowercase
       .replace(/[\\/:*?"<>|]/g, "") // Remove invalid chars
       .replace(/\s+/g, "_") // Replace spaces with underscores
       .replace(/[^\w\u0600-\u06FF\-]/g, "_") // Keep alphanumeric, Persian, and hyphens
-      .substring(0, 60) // Limit to 60 chars
+      .replace(/_+/g, "_") // ✅ Replace multiple underscores with single underscore
       .replace(/^_+|_+$/g, ""); // Remove leading/trailing underscores
 
     if (!sanitized || sanitized.length === 0) {
       sanitized = `image_${index + 1}`;
     }
 
-    return `${sanitized}_${index + 1}`;
+    return sanitized; // ✅ No more index number at the end!
   }
 
   async downloadAllCategoriesZip() {
