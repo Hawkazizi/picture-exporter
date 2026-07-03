@@ -10,6 +10,7 @@ class ImageEditor {
     this.generatedByImage = [];
 
     this.imageTextZones = [];
+    this.globalTextZone = null; // 🔥 NEW: Global Zone
     this.isDrawingZone = false;
     this.drawingZoneForIndex = -1;
     this.tempDrawRect = null;
@@ -83,6 +84,7 @@ class ImageEditor {
     this.activeImageIndex = -1;
     this.generatedByImage = [];
     this.imageTextZones = [];
+    this.globalTextZone = null; // 🔥 NEW: Reset Global Zone
     this.isDrawingZone = false;
     this.drawingZoneForIndex = -1;
     this.tempDrawRect = null;
@@ -160,6 +162,14 @@ class ImageEditor {
     if (this.placeholder) this.placeholder.style.display = "block";
     if (this.editVideoControls) this.editVideoControls.classList.add("hidden");
 
+    // 🔥 NEW: Reset Global Zone Button
+    if (this.drawGlobalZoneBtn) {
+      this.drawGlobalZoneBtn.innerText =
+        "🌍 رسم ناحیه گلوبال (برای همه تصاویر)";
+      this.drawGlobalZoneBtn.style.backgroundColor = "";
+      this.drawGlobalZoneBtn.style.color = "";
+    }
+
     if (this.generateVideoBtn) {
       this.generateVideoBtn.innerText = "🎥 ساخت و دانلود ویدیو";
       this.generateVideoBtn.disabled = false;
@@ -193,9 +203,11 @@ class ImageEditor {
 
     this.allTextsTextarea = document.getElementById("allTexts");
     this.downloadAllZipBtn = document.getElementById("downloadAllZipBtn");
-
+    this.generateAllBtn = document.getElementById("generateAllBtn");
     this.resetBtn = document.getElementById("resetBtn");
     this.customFontSelect = document.getElementById("fontFamilyCustom");
+    this.drawGlobalZoneBtn = document.getElementById("drawGlobalZoneBtn"); // 🔥 NEW
+
     if (this.customFontSelect) {
       this.customFontHeader = this.customFontSelect.querySelector(
         ".custom-font-select-header",
@@ -319,7 +331,21 @@ class ImageEditor {
         this.downloadAllCategoriesZip(),
       );
     }
+
+    if (this.generateAllBtn) {
+      this.generateAllBtn.addEventListener("click", () =>
+        this.generateForAllImages(),
+      );
+    }
+
     this.resetBtn.addEventListener("click", () => this.resetToDefaults());
+
+    // 🔥 NEW: Global Zone Button Event
+    if (this.drawGlobalZoneBtn) {
+      this.drawGlobalZoneBtn.addEventListener("click", () =>
+        this.startDrawingGlobalZone(),
+      );
+    }
 
     if (this.customFontHeader) {
       this.customFontHeader.addEventListener("click", (e) => {
@@ -368,7 +394,10 @@ class ImageEditor {
       const item = this.generatedByImage[imgIndex]?.[genIndex];
       if (!item) return;
 
+      this.draw(true); // 🔥 Hide zone for clean thumbnail
       item.dataUrl = this.canvas.toDataURL("image/png");
+      this.draw(); // 🔥 Restore UI with zone visible
+
       const itemEl = document.getElementById(`gen-${imgIndex}-${genIndex}`);
       if (itemEl) {
         itemEl.querySelector("img").src = item.dataUrl;
@@ -376,23 +405,20 @@ class ImageEditor {
     }
   }
 
-  /**
-   * 🔥 NEW: Sanitize text for use as a filename
-   */
   sanitizeImageFilename(text, index) {
     let sanitized = text
-      .toLowerCase() // ✅ Convert to lowercase
-      .replace(/[\\/:*?"<>|]/g, "") // Remove invalid chars
-      .replace(/\s+/g, "_") // Replace spaces with underscores
-      .replace(/[^\w\u0600-\u06FF\-]/g, "_") // Keep alphanumeric, Persian, and hyphens
-      .replace(/_+/g, "_") // ✅ Replace multiple underscores with single underscore
-      .replace(/^_+|_+$/g, ""); // Remove leading/trailing underscores
+      .toLowerCase()
+      .replace(/[\\/:*?"<>|]/g, "")
+      .replace(/\s+/g, "_")
+      .replace(/[^\w\u0600-\u06FF\-]/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
 
     if (!sanitized || sanitized.length === 0) {
       sanitized = `image_${index + 1}`;
     }
 
-    return sanitized; // ✅ No more index number at the end!
+    return sanitized;
   }
 
   async downloadAllCategoriesZip() {
@@ -410,14 +436,12 @@ class ImageEditor {
 
     try {
       const zip = new JSZip();
-      let globalIndex = 0; // 🔥 Track global index for unique filenames
+      let globalIndex = 0;
 
-      // 🔥 FLAT STRUCTURE: No folders, all images in root
       this.generatedByImage.forEach((items, imgIndex) => {
         if (!items || items.length === 0) return;
 
         items.forEach((item, genIndex) => {
-          // 🔥 Name each image after its text content
           const fileName = this.sanitizeImageFilename(item.text, globalIndex);
 
           zip.file(`${fileName}.png`, item.dataUrl.split(",")[1], {
@@ -439,7 +463,46 @@ class ImageEditor {
     }
   }
 
+  // 🔥 NEW: Start drawing global zone
+  startDrawingGlobalZone() {
+    if (this.drawingZoneForIndex !== -1 && this.drawingZoneForIndex !== null) {
+      const btn = document.querySelector(
+        `.draw-zone-btn-thumb[data-index="${this.drawingZoneForIndex}"]`,
+      );
+      if (btn) {
+        const hasZone = !!this.imageTextZones[this.drawingZoneForIndex];
+        btn.innerText = hasZone ? "✅ ناحیه رسم شد" : "✋ رسم ناحیه";
+        btn.style.backgroundColor = hasZone ? "#10b981" : "";
+        btn.style.color = hasZone ? "white" : "";
+      }
+    }
+
+    this.isDrawingZone = true;
+    this.drawingZoneForIndex = -1; // -1 indicates global zone
+    this.canvas.style.cursor = "crosshair";
+
+    if (this.drawGlobalZoneBtn) {
+      this.drawGlobalZoneBtn.innerText = "⏳ در حال رسم...";
+      this.drawGlobalZoneBtn.style.backgroundColor = "#f59e0b";
+      this.drawGlobalZoneBtn.style.color = "white";
+    }
+
+    document
+      .querySelector(".canvas-wrapper")
+      .scrollIntoView({ behavior: "smooth" });
+  }
+
   startDrawingZone(imgIndex) {
+    // 🔥 NEW: Reset global zone button if it was in progress
+    if (this.drawingZoneForIndex === -1 && this.drawGlobalZoneBtn) {
+      const hasZone = !!this.globalTextZone;
+      this.drawGlobalZoneBtn.innerText = hasZone
+        ? "✅ ناحیه گلوبال رسم شد"
+        : "🌍 رسم ناحیه گلوبال (برای همه تصاویر)";
+      this.drawGlobalZoneBtn.style.backgroundColor = hasZone ? "#10b981" : "";
+      this.drawGlobalZoneBtn.style.color = hasZone ? "white" : "";
+    }
+
     const btn = document.querySelector(
       `.draw-zone-btn-thumb[data-index="${imgIndex}"]`,
     );
@@ -544,7 +607,6 @@ class ImageEditor {
     this.setActiveImage(0);
     this.editVideoControls.classList.remove("hidden");
 
-    // 🔥 NEW: Show batch video controls
     const batchControls = document.getElementById("batchVideoControls");
     if (batchControls) batchControls.classList.remove("hidden");
   }
@@ -717,7 +779,8 @@ class ImageEditor {
       origH = this.textBoxHeightPercent;
     const origFontSize = this.fontSize;
 
-    const zone = this.imageTextZones[imgIndex];
+    // 🔥 UPDATED: Fallback to globalTextZone if specific zone is not set
+    const zone = this.imageTextZones[imgIndex] || this.globalTextZone;
     if (zone) {
       this.textX = zone.textX;
       this.textY = zone.textY;
@@ -764,7 +827,7 @@ class ImageEditor {
       }
 
       this.fontSize = currentFontSize;
-      this.draw();
+      this.draw(true); // 🔥 Pass true to hide zone boundaries during export
       const dataUrl = this.canvas.toDataURL("image/png");
 
       const itemData = {
@@ -831,8 +894,38 @@ class ImageEditor {
     this.text = originalText;
     this.draw();
   }
+  // 🔥 NEW: Generate for all images at once
+  generateForAllImages() {
+    if (!this.allTextsTextarea) return;
+    const allLines = this.allTextsTextarea.value
+      .split("\n")
+      .map((t) => t.trim())
+      .filter((t) => t !== "");
 
-  // 🔥 UPDATED: Added isBatch parameter to prevent scrolling during batch generation
+    if (allLines.length === 0) return alert("لطفاً حداقل یک متن وارد کنید!");
+    if (this.images.length === 0)
+      return alert("لطفاً ابتدا تصاویر را بارگذاری کنید!");
+
+    // Change button state to show loading
+    const originalText = this.generateAllBtn.innerText;
+    this.generateAllBtn.innerText = "⏳ در حال تولید...";
+    this.generateAllBtn.disabled = true;
+
+    try {
+      // Loop through all images and trigger generation for each
+      for (let i = 0; i < this.images.length; i++) {
+        this.generateForImage(i);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("خطا در تولید تصاویر!");
+    } finally {
+      // Restore button state
+      this.generateAllBtn.innerText = originalText;
+      this.generateAllBtn.disabled = false;
+    }
+  }
+
   startEditingGenerated(imgIndex, genIndex, isBatch = false) {
     const itemData = this.generatedByImage[imgIndex][genIndex];
     if (!itemData) return;
@@ -879,7 +972,6 @@ class ImageEditor {
       this.draw();
     })();
 
-    // 🔥 UPDATED: Only scroll if we are NOT in batch mode
     if (!isBatch) {
       document
         .querySelector(".canvas-wrapper")
@@ -923,10 +1015,14 @@ class ImageEditor {
   downloadImage() {
     if (!this.isImageLoaded)
       return alert("لطفاً ابتدا یک تصویر بارگذاری کنید!");
+
+    this.draw(true); // 🔥 Hide zone for clean export
     const link = document.createElement("a");
     link.download = "canvas-image.png";
     link.href = this.canvas.toDataURL("image/png");
     link.click();
+
+    this.draw(); // 🔥 Restore UI with zone visible
   }
 
   downloadSingleGenerated(imgIndex, genIndex) {
@@ -992,7 +1088,7 @@ class ImageEditor {
     this.ctx.globalAlpha = originalAlpha;
   }
 
-  draw() {
+  draw(hideZone = false) {
     if (!this.isImageLoaded) return;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.filter = this.imageStyle === "none" ? "none" : this.imageStyle;
@@ -1001,24 +1097,52 @@ class ImageEditor {
     this.drawText();
     this.drawWatermark();
 
-    if (this.tempDrawRect) {
-      this.ctx.fillStyle = "rgba(37, 99, 235, 0.2)";
-      this.ctx.fillRect(
-        Math.min(this.tempDrawRect.x1, this.tempDrawRect.x2),
-        Math.min(this.tempDrawRect.y1, this.tempDrawRect.y2),
-        Math.abs(this.tempDrawRect.x2 - this.tempDrawRect.x1),
-        Math.abs(this.tempDrawRect.y2 - this.tempDrawRect.y1),
-      );
-      this.ctx.strokeStyle = "#2563eb";
-      this.ctx.lineWidth = 4;
-      this.ctx.setLineDash([10, 5]);
-      this.ctx.strokeRect(
-        Math.min(this.tempDrawRect.x1, this.tempDrawRect.x2),
-        Math.min(this.tempDrawRect.y1, this.tempDrawRect.y2),
-        Math.abs(this.tempDrawRect.x2 - this.tempDrawRect.x1),
-        Math.abs(this.tempDrawRect.y2 - this.tempDrawRect.y1),
-      );
-      this.ctx.setLineDash([]);
+    // 🔥 UPDATED: Only draw zone boundaries if hideZone is false
+    if (!hideZone) {
+      // Visualize active zone (Global or Specific)
+      const currentZone =
+        this.imageTextZones[this.activeImageIndex] || this.globalTextZone;
+      if (currentZone && !this.isDrawingZone) {
+        const zone = currentZone;
+        const w = (zone.textBoxWidthPercent / 100) * this.canvas.width;
+        const h = (zone.textBoxHeightPercent / 100) * this.canvas.height;
+        const x = zone.textX - w / 2;
+        const y = zone.textY - h / 2;
+
+        const isGlobal =
+          !this.imageTextZones[this.activeImageIndex] && this.globalTextZone;
+        const color = isGlobal ? "#10b981" : "#3b82f6"; // Green for Global, Blue for Specific
+
+        this.ctx.fillStyle = isGlobal
+          ? "rgba(16, 185, 129, 0.1)"
+          : "rgba(59, 130, 246, 0.1)";
+        this.ctx.fillRect(x, y, w, h);
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = 2;
+        this.ctx.setLineDash([5, 5]);
+        this.ctx.strokeRect(x, y, w, h);
+        this.ctx.setLineDash([]);
+      }
+
+      if (this.tempDrawRect) {
+        this.ctx.fillStyle = "rgba(37, 99, 235, 0.2)";
+        this.ctx.fillRect(
+          Math.min(this.tempDrawRect.x1, this.tempDrawRect.x2),
+          Math.min(this.tempDrawRect.y1, this.tempDrawRect.y2),
+          Math.abs(this.tempDrawRect.x2 - this.tempDrawRect.x1),
+          Math.abs(this.tempDrawRect.y2 - this.tempDrawRect.y1),
+        );
+        this.ctx.strokeStyle = "#2563eb";
+        this.ctx.lineWidth = 4;
+        this.ctx.setLineDash([10, 5]);
+        this.ctx.strokeRect(
+          Math.min(this.tempDrawRect.x1, this.tempDrawRect.x2),
+          Math.min(this.tempDrawRect.y1, this.tempDrawRect.y2),
+          Math.abs(this.tempDrawRect.x2 - this.tempDrawRect.x1),
+          Math.abs(this.tempDrawRect.y2 - this.tempDrawRect.y1),
+        );
+        this.ctx.setLineDash([]);
+      }
     }
   }
 
@@ -1136,33 +1260,61 @@ class ImageEditor {
       const width = Math.abs(rect.x2 - rect.x1);
       const height = Math.abs(rect.y2 - rect.y1);
 
-      const btn = document.querySelector(
-        `.draw-zone-btn-thumb[data-index="${this.drawingZoneForIndex}"]`,
-      );
-
       if (width > 20 && height > 20) {
         const centerX = (rect.x1 + rect.x2) / 2;
         const centerY = (rect.y1 + rect.y2) / 2;
         const widthPercent = (width / this.canvas.width) * 100;
         const heightPercent = (height / this.canvas.height) * 100;
 
-        this.imageTextZones[this.drawingZoneForIndex] = {
+        const zoneData = {
           textX: centerX,
           textY: centerY,
           textBoxWidthPercent: widthPercent,
           textBoxHeightPercent: heightPercent,
         };
 
-        if (btn) {
-          btn.innerText = "✅ ناحیه رسم شد";
-          btn.style.backgroundColor = "#10b981";
-          btn.style.color = "white";
+        // 🔥 UPDATED: Handle Global vs Specific Zone
+        if (this.drawingZoneForIndex === -1) {
+          this.globalTextZone = zoneData;
+          if (this.drawGlobalZoneBtn) {
+            this.drawGlobalZoneBtn.innerText = "✅ ناحیه گلوبال رسم شد";
+            this.drawGlobalZoneBtn.style.backgroundColor = "#10b981";
+            this.drawGlobalZoneBtn.style.color = "white";
+          }
+        } else {
+          this.imageTextZones[this.drawingZoneForIndex] = zoneData;
+          const btn = document.querySelector(
+            `.draw-zone-btn-thumb[data-index="${this.drawingZoneForIndex}"]`,
+          );
+          if (btn) {
+            btn.innerText = "✅ ناحیه رسم شد";
+            btn.style.backgroundColor = "#10b981";
+            btn.style.color = "white";
+          }
         }
       } else {
-        if (btn) {
-          btn.innerText = "✋ رسم ناحیه";
-          btn.style.backgroundColor = "";
-          btn.style.color = "";
+        // 🔥 UPDATED: Restore button state if drawing was too small
+        if (this.drawingZoneForIndex === -1) {
+          if (this.drawGlobalZoneBtn) {
+            const hasZone = !!this.globalTextZone;
+            this.drawGlobalZoneBtn.innerText = hasZone
+              ? "✅ ناحیه گلوبال رسم شد"
+              : "🌍 رسم ناحیه گلوبال (برای همه تصاویر)";
+            this.drawGlobalZoneBtn.style.backgroundColor = hasZone
+              ? "#10b981"
+              : "";
+            this.drawGlobalZoneBtn.style.color = hasZone ? "white" : "";
+          }
+        } else {
+          const btn = document.querySelector(
+            `.draw-zone-btn-thumb[data-index="${this.drawingZoneForIndex}"]`,
+          );
+          if (btn) {
+            const hasZone = !!this.imageTextZones[this.drawingZoneForIndex];
+            btn.innerText = hasZone ? "✅ ناحیه رسم شد" : "✋ رسم ناحیه";
+            btn.style.backgroundColor = hasZone ? "#10b981" : "";
+            btn.style.color = hasZone ? "white" : "";
+          }
         }
       }
 
@@ -1526,7 +1678,6 @@ class ImageEditor {
       const audioTracks = destination.stream.getAudioTracks();
       audioTracks.forEach((track) => videoStream.addTrack(track));
 
-      // 🔥 Try MP4 first, fall back to WebM
       const types = [
         "video/mp4; codecs=avc1.42E01E,mp4a.40.2",
         "video/mp4",
@@ -1560,7 +1711,6 @@ class ImageEditor {
       recorder.onstop = async () => {
         const videoBlob = new Blob(chunks, { type: mimeType });
 
-        // Generate filename from text
         let fileName = "quote-video";
         if (this.text) {
           fileName = this.text
@@ -1656,11 +1806,10 @@ class ImageEditor {
 document.addEventListener("DOMContentLoaded", () => {
   const editor = new ImageEditor();
 
-  // 🔥 NEW: Initialize Batch Video Manager
   const batchManager = new BatchVideoManager(editor);
   const batchAudioUpload = document.getElementById("batchAudioUpload");
   const batchMp3List = document.getElementById("batchMp3List");
-  const batchEffectSelect = document.getElementById("batchEffectSelect"); // 🔥 NEW: Single effect dropdown
+  const batchEffectSelect = document.getElementById("batchEffectSelect");
   const generateBatchVideosBtn = document.getElementById(
     "generateBatchVideosBtn",
   );
@@ -1671,15 +1820,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const batchProgressBar = document.getElementById("batchProgressBar");
   const batchProgressText = document.getElementById("batchProgressText");
 
-  let currentMp3Files = []; // 🔥 Simplified: Just store File objects
+  let currentMp3Files = [];
 
-  // Handle MP3 Upload and UI Generation
   if (batchAudioUpload) {
     batchAudioUpload.addEventListener("change", (e) => {
       const files = Array.from(e.target.files);
       if (!files.length) return;
 
-      currentMp3Files = files; // 🔥 Just store the files
+      currentMp3Files = files;
       renderBatchMp3List();
     });
   }
@@ -1693,7 +1841,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const itemDiv = document.createElement("div");
       itemDiv.className = "batch-mp3-item";
 
-      // 🔥 Simplified: Just show the filename, no effect dropdown
       itemDiv.innerHTML = `
         <span class="mp3-filename" title="${file.name}">🎵 ${file.name}</span>
       `;
@@ -1702,29 +1849,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Handle Batch Generation Click
   if (generateBatchVideosBtn) {
     generateBatchVideosBtn.addEventListener("click", () => {
       const duration = parseFloat(batchVideoDuration.value) || 5;
-      const globalEffect = batchEffectSelect.value; // 🔥 Get the single global effect
+      const globalEffect = batchEffectSelect.value;
 
       generateBatchVideosBtn.disabled = true;
       generateBatchVideosBtn.innerText = "⏳ در حال پردازش...";
       batchProgressContainer.classList.remove("hidden");
 
-      // 🔥 Pass mp3Files and globalEffect instead of mp3Configs
       batchManager.startGeneration(
         currentMp3Files,
         globalEffect,
         duration,
         (current, total, text) => {
           if (current === -1) {
-            // Finished
             batchProgressContainer.classList.add("hidden");
             generateBatchVideosBtn.disabled = false;
             generateBatchVideosBtn.innerText = "🚀 ساخت گروهی ویدیوها";
           } else {
-            // Update Progress
             const percent = (current / total) * 100;
             batchProgressBar.style.width = `${percent}%`;
             batchProgressText.innerText = text;
